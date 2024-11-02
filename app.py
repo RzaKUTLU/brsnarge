@@ -111,7 +111,7 @@ if 'restoranlar' not in st.session_state:
            'Katmer': 75
         },
         'Çalıkuşu Kirazlık': {
-            'Tavuk Dürüm Ç.lavaş Döner(100gr)'': 160,
+            'Tavuk Dürüm Ç.lavaş Döner(100gr)': 160,
             'Tavuk Dürüm Döner(50gr)': 80,
             'Et Dürüm Döner': 140,
             'Pepsi kola kutu': 40,
