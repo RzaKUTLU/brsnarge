@@ -1,8 +1,28 @@
 import streamlit as st
 import pandas as pd
+import sqlite3
 from datetime import datetime
 import io
 import xlsxwriter
+
+# SQLite veritabanı bağlantısı
+conn = sqlite3.connect('siparisler.db')
+
+# Siparişler tablosunu oluştur
+def create_table():
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS siparisler (
+        id INTEGER PRIMARY KEY,
+        tarih TEXT,
+        isim TEXT,
+        restoran TEXT,
+        yemek TEXT,
+        fiyat REAL
+    )
+    ''')
+    conn.commit()
+
+create_table()
 
 # Excel indirme fonksiyonu
 def to_excel(df):
@@ -31,7 +51,7 @@ def to_excel(df):
 # Sayfa yapılandırması
 st.set_page_config(page_title="Ben Borsan Yemek Sipariş Sistemi", layout="wide")
 
-# Session state'i başlat
+# Restoranları sakla
 if 'restoranlar' not in st.session_state:
     st.session_state.restoranlar = {
         'Pide Salonu': {
@@ -56,9 +76,6 @@ if 'restoranlar' not in st.session_state:
             'Ayran': 20
         }
     }
-
-if 'siparisler' not in st.session_state:
-    st.session_state.siparisler = []
 
 # Başlık
 st.title("🍽️ Ben Borsan Yemek Sipariş Sistemi")
@@ -108,25 +125,24 @@ with col1:
             st.write(f"Fiyat: {fiyat} TL")
 
             if st.button("Sipariş Ver") and isim:
-                yeni_siparis = {
-                    'Tarih': datetime.now().strftime("%Y-%m-%d %H:%M"),
-                    'İsim': isim,
-                    'Restoran': secilen_restoran,
-                    'Yemek': secilen_yemek,
-                    'Fiyat': fiyat
-                }
-                st.session_state.siparisler.append(yeni_siparis)
+                # Yeni siparişi veritabanına ekle
+                conn.execute('''
+                    INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat) 
+                    VALUES (?, ?, ?, ?, ?)''', 
+                    (datetime.now().strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat))
+                conn.commit()
                 st.success("Siparişiniz alındı!")
 
 # Siparişleri görüntüleme
 with col2:
     st.header("Günlük Siparişler")
-    if st.session_state.siparisler:
-        df = pd.DataFrame(st.session_state.siparisler)
+    # Veritabanından tüm siparişleri oku
+    df = pd.read_sql_query('SELECT * FROM siparisler', conn)
 
+    if not df.empty:
         # Kişi bazlı toplam tutarlar
         st.subheader("Kişi Bazlı Toplam")
-        kisi_bazli = df.groupby('İsim')['Fiyat'].sum().reset_index()
+        kisi_bazli = df.groupby('isim')['fiyat'].sum().reset_index()
         st.dataframe(kisi_bazli)
 
         # Excel indirme butonları
@@ -157,12 +173,13 @@ with col2:
         st.dataframe(df)
 
         # Toplam tutar
-        toplam_tutar = df['Fiyat'].sum()
+        toplam_tutar = df['fiyat'].sum()
         st.metric("Toplam Tutar", f"{toplam_tutar} TL")
 
         # Siparişleri temizleme butonu
         if st.button("Siparişleri Temizle"):
-            st.session_state.siparisler = []
+            conn.execute('DELETE FROM siparisler')
+            conn.commit()
             st.experimental_rerun()
     else:
         st.info("Henüz sipariş bulunmamaktadır.")
