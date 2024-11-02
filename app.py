@@ -123,7 +123,7 @@ if 'restoranlar' not in st.session_state:
     }
 
 # Başlık
-st.title("🍽️ Ben Borsan Yemek Sipariş Sistemi")
+st.title("🍽️ Borsan Ar-Ge Yemek Sipariş Sistemi")
 
 # Sidebar - Yeni Restoran ve Menü Ekleme
 with st.sidebar:
