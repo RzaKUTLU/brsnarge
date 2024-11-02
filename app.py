@@ -49,17 +49,66 @@ def to_excel(df):
     return output.getvalue()
 
 # Sayfa yapılandırması
-st.set_page_config(page_title="Ben Borsan Yemek Sipariş Sistemi", layout="wide")
+st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
 
 # Restoranları sakla
 if 'restoranlar' not in st.session_state:
     st.session_state.restoranlar = {
-        'Pide Salonu': {
-            'Kıymalı Pide': 120,
-            'Kaşarlı Pide': 110,
-            'Kuşbaşılı Pide': 130,
-            'Kola': 30,
-            'Ayran': 20
+        'Nazar Petrol': {
+           'Adana Dürüm': 170,
+           'Adana Porsiyon': 240,
+           'Tavuk Dürüm': 155,
+           'Kanat Porsiyon': 200,
+           'Tavuk Porsiyon': 150,
+           'Yarım Tavuk': 130,
+           'Yarım Çeyrek Tavuk': 150,
+           'Bütün Ekmek Tavuk': 170,
+           'Ciğer Dürüm': 170,
+           'Ciğer Porsiyon': 240,
+           'Et Dürüm': 190,
+           'Et Porsiyon': 270,
+           'Köfte Porsiyon': 240,
+           'Yarım Köfte': 170,
+           'Yarım Çeyrek Köfte': 170,
+           'Bütün Köfte': 190,
+           'Kapalı Pide': 90,
+           'Lahmacun': 80,
+           'Açık Kıymalı': 170,
+           'Açık Kaşarlı': 180,
+           'Açık Karışık': 220,
+           'Açık Sucuklu': 230,
+           'Açık Pastırmalı': 230,
+           'Açık Beyaz Peynirli': 190,
+           'Kapalı Beyaz Peynirli': 170,
+           'Yağlı': 140,
+           'Extra Lavaş': 10,
+           'Extra Yumurta': 10,
+           'Extra Kaşar': 25,
+           'Çoban Salata': 30,
+           'Ezme': 20,
+           'Patlıcan Salatası': 50,
+           'Tropicana M. Suyu': 35,
+           '2.5 Lt Kola': 70,
+           '1 Lt Kola': 50,
+           'Kutu Kola': 35,
+           'Şalgam': 30,
+           'Şişe Kola': 50,
+           '1 Lt Fanta': 50,
+           '2.5 Lt Fanta': 70,
+           'Kutu Fanta': 30,
+           'Sprite': 30,
+           'Şişe Zero': 40,
+           'Türk Kahvesi': 40,
+           'Su': 5,
+           'Çay': 10,
+           'Ice Tea Şeftali': 35,
+           'Açık Ayran': 35,
+           'Ayran Pet': 35,
+           'Ayran Şişe': 35,
+           'Portakal Suyu': 35,
+           'Künefe': 85,
+           'Sütlaç': 75,
+           'Katmer': 75
         },
         'Kebapçı': {
             'Adana Kebap': 160,
