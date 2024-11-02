@@ -18,16 +18,15 @@ def to_excel(df):
 
         # Sütun genişliklerini ayarla
         worksheet.set_column('A:A', 20)  # Tarih sütunu
-        worksheet.set_column('B:B', 15)  # İsim sütunu
-        worksheet.set_column('C:C', 15)  # Restoran sütunu
-        worksheet.set_column('D:D', 20)  # Yemek sütunu
+        worksheet.set_column('B:B', 10)  # İsim sütunu
+        worksheet.set_column('C:C', 10)  # Restoran sütunu
+        worksheet.set_column('D:D', 15)  # Yemek sütunu
         worksheet.set_column('E:E', 12)  # Fiyat sütunu
 
         # Fiyat sütununa format uygula
         worksheet.set_column('E:E', 12, para_format)
 
     return output.getvalue()
-
 
 # Sayfa yapılandırması
 st.set_page_config(page_title="Ben Borsan Yemek Sipariş Sistemi", layout="wide")
@@ -116,12 +115,7 @@ with col1:
                     'Yemek': secilen_yemek,
                     'Fiyat': fiyat
                 }
-
-                # Siparişi ekle
-                df = pd.DataFrame(st.session_state.siparisler)
-                new_order_df = pd.DataFrame([yeni_siparis])  # Yeni siparişi içeren bir DataFrame oluştur
-                df = pd.concat([df, new_order_df], ignore_index=True)  # Yeni siparişi mevcut DataFrame'e ekle
-                st.session_state.siparisler = df.to_dict(orient='records')  # Güncellenmiş siparişleri kaydet
+                st.session_state.siparisler.append(yeni_siparis)
                 st.success("Siparişiniz alındı!")
 
 # Siparişleri görüntüleme
