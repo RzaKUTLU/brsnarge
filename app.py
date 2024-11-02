@@ -116,7 +116,7 @@ if 'restoranlar' not in st.session_state:
             'Et Dürüm Döner': 140,
             'Pepsi kola kutu': 40,
             'Kola': 30,
-            'Ayran': 25
+            'Ayran': 25,
             'Ice tea şeftali': 40
 
         }
