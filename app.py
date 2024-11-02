@@ -2,14 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import io
-import os
-
-# CSV file path
-CSV_FILE = 'siparisler.csv'
-
-# Ensure the CSV file exists
-if not os.path.exists(CSV_FILE):
-    pd.DataFrame(columns=['Tarih', 'İsim', 'Restoran', 'Yemek', 'Fiyat']).to_csv(CSV_FILE, index=False)
+import xlsxwriter
 
 # Excel indirme fonksiyonu
 def to_excel(df):
@@ -35,10 +28,11 @@ def to_excel(df):
 
     return output.getvalue()
 
+
 # Sayfa yapılandırması
 st.set_page_config(page_title="Ben Borsan Yemek Sipariş Sistemi", layout="wide")
 
-# Restoranlar ve siparişler
+# Session state'i başlat
 if 'restoranlar' not in st.session_state:
     st.session_state.restoranlar = {
         'Pide Salonu': {
@@ -64,6 +58,9 @@ if 'restoranlar' not in st.session_state:
         }
     }
 
+if 'siparisler' not in st.session_state:
+    st.session_state.siparisler = []
+
 # Başlık
 st.title("🍽️ Ben Borsan Yemek Sipariş Sistemi")
 
@@ -71,7 +68,8 @@ st.title("🍽️ Ben Borsan Yemek Sipariş Sistemi")
 with st.sidebar:
     st.header("Restoran Yönetimi")
 
-    new_restaurant = st.text_input("Yeni Restoran Adı")
+    # Yeni restoran ekleme
+    new_restaurant = st.text_input("Yeni Restoran")
     if st.button("Restoran Ekle") and new_restaurant:
         if new_restaurant not in st.session_state.restoranlar:
             st.session_state.restoranlar[new_restaurant] = {}
@@ -83,7 +81,7 @@ with st.sidebar:
     st.subheader("Menü Yönetimi")
     restaurant_select = st.selectbox("Restoran Seçin", options=list(st.session_state.restoranlar.keys()))
 
-    new_item = st.text_input("Yemek Adı")
+    new_item = st.text_input("Yemek")
     new_price = st.number_input("Fiyat (TL)", min_value=0, value=0)
 
     if st.button("Menüye Ekle") and new_item and new_price > 0:
@@ -96,11 +94,15 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.header("Sipariş Ver")
 
-    isim = st.text_input("Adınız", max_chars=15)
+    # Kullanıcı bilgileri ve sipariş formu
+    isim = st.text_input("Adınız")
     secilen_restoran = st.selectbox("Restoran", options=list(st.session_state.restoranlar.keys()))
 
     if secilen_restoran:
-        secilen_yemek = st.selectbox("Yemek", options=list(st.session_state.restoranlar[secilen_restoran].keys()))
+        secilen_yemek = st.selectbox(
+            "Yemek",
+            options=list(st.session_state.restoranlar[secilen_restoran].keys())
+        )
 
         if secilen_yemek:
             fiyat = st.session_state.restoranlar[secilen_restoran][secilen_yemek]
@@ -114,19 +116,20 @@ with col1:
                     'Yemek': secilen_yemek,
                     'Fiyat': fiyat
                 }
-                # Siparişi CSV'ye ekle
-                df = pd.read_csv(CSV_FILE)
-                df = df.append(yeni_siparis, ignore_index=True)
-                df.to_csv(CSV_FILE, index=False)
 
+                # Siparişi ekle
+                df = pd.DataFrame(st.session_state.siparisler)
+                new_order_df = pd.DataFrame([yeni_siparis])  # Yeni siparişi içeren bir DataFrame oluştur
+                df = pd.concat([df, new_order_df], ignore_index=True)  # Yeni siparişi mevcut DataFrame'e ekle
+                st.session_state.siparisler = df.to_dict(orient='records')  # Güncellenmiş siparişleri kaydet
                 st.success("Siparişiniz alındı!")
 
 # Siparişleri görüntüleme
 with col2:
     st.header("Günlük Siparişler")
-    df = pd.read_csv(CSV_FILE)
+    if st.session_state.siparisler:
+        df = pd.DataFrame(st.session_state.siparisler)
 
-    if not df.empty:
         # Kişi bazlı toplam tutarlar
         st.subheader("Kişi Bazlı Toplam")
         kisi_bazli = df.groupby('İsim')['Fiyat'].sum().reset_index()
@@ -162,5 +165,10 @@ with col2:
         # Toplam tutar
         toplam_tutar = df['Fiyat'].sum()
         st.metric("Toplam Tutar", f"{toplam_tutar} TL")
+
+        # Siparişleri temizleme butonu
+        if st.button("Siparişleri Temizle"):
+            st.session_state.siparisler = []
+            st.experimental_rerun()
     else:
         st.info("Henüz sipariş bulunmamaktadır.")
