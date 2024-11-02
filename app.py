@@ -110,19 +110,15 @@ if 'restoranlar' not in st.session_state:
            'Sütlaç': 75,
            'Katmer': 75
         },
-        'Kebapçı': {
-            'Adana Kebap': 160,
-            'Urfa Kebap': 150,
-            'Lahmacun': 50,
+        'Çalıkuşu Kirazlık': {
+            'Tavuk Dürüm Ç.lavaş Döner(100gr)'': 160,
+            'Tavuk Dürüm Döner(50gr)': 80,
+            'Et Dürüm Döner': 140,
+            'Pepsi kola kutu': 40,
             'Kola': 30,
-            'Ayran': 20
-        },
-        'Ev Yemekleri': {
-            'Kuru Fasulye': 80,
-            'Pilav': 40,
-            'Mercimek Çorbası': 35,
-            'Kola': 30,
-            'Ayran': 20
+            'Ayran': 25
+            'Ice tea şeftali': 40
+
         }
     }
 
