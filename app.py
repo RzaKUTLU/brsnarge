@@ -19,11 +19,12 @@ def create_table():
         restoran TEXT,
         yemek TEXT,
         fiyat REAL,
-        notlar TEXT  -- 'not' kelimesi yerine 'notlar' kullanıldı
+        notlar TEXT  -- 'not' sütunu 'notlar' olarak güncellendi
     )
     ''')
     conn.commit()
 
+# Tablonun varlığını kontrol et ve oluştur
 create_table()
 
 # Excel indirme fonksiyonu
@@ -43,10 +44,8 @@ def to_excel(df):
         worksheet.set_column('B:B', 10)  # İsim sütunu
         worksheet.set_column('C:C', 10)  # Restoran sütunu
         worksheet.set_column('D:D', 15)  # Yemek sütunu
-        worksheet.set_column('E:E', 12)  # Fiyat sütunu
-
-        # Fiyat sütununa format uygula
-        worksheet.set_column('E:E', 12, para_format)
+        worksheet.set_column('E:E', 12, para_format)  # Fiyat sütunu
+        worksheet.set_column('F:F', 12)  # Not sütunu
 
     return output.getvalue()
 
@@ -57,14 +56,69 @@ st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wid
 if 'restoranlar' not in st.session_state:
     st.session_state.restoranlar = {
         'Nazar Petrol': {
-           'Adana Dürüm': 170,
-           'Adana Porsiyon': 240,
-           # ... (diğer yemekler burada)
+            'Adana Dürüm': 170,
+            'Adana Porsiyon': 240,
+            'Tavuk Dürüm': 155,
+            'Kanat Porsiyon': 200,
+            'Tavuk Porsiyon': 150,
+            'Yarım Tavuk': 130,
+            'Yarım Çeyrek Tavuk': 150,
+            'Bütün Ekmek Tavuk': 170,
+            'Ciğer Dürüm': 170,
+            'Ciğer Porsiyon': 240,
+            'Et Dürüm': 190,
+            'Et Porsiyon': 270,
+            'Köfte Porsiyon': 240,
+            'Yarım Köfte': 170,
+            'Yarım Çeyrek Köfte': 170,
+            'Bütün Köfte': 190,
+            'Kapalı Pide': 90,
+            'Lahmacun': 80,
+            'Açık Kıymalı': 170,
+            'Açık Kaşarlı': 180,
+            'Açık Karışık': 220,
+            'Açık Sucuklu': 230,
+            'Açık Pastırmalı': 230,
+            'Açık Beyaz Peynirli': 190,
+            'Kapalı Beyaz Peynirli': 170,
+            'Yağlı': 140,
+            'Extra Lavaş': 10,
+            'Extra Yumurta': 10,
+            'Extra Kaşar': 25,
+            'Çoban Salata': 30,
+            'Ezme': 20,
+            'Patlıcan Salatası': 50,
+            'Tropicana M. Suyu': 35,
+            '2.5 Lt Kola': 70,
+            '1 Lt Kola': 50,
+            'Kutu Kola': 35,
+            'Şalgam': 30,
+            'Şişe Kola': 50,
+            '1 Lt Fanta': 50,
+            '2.5 Lt Fanta': 70,
+            'Kutu Fanta': 30,
+            'Sprite': 30,
+            'Şişe Zero': 40,
+            'Türk Kahvesi': 40,
+            'Su': 5,
+            'Çay': 10,
+            'Ice Tea Şeftali': 35,
+            'Açık Ayran': 35,
+            'Ayran Pet': 35,
+            'Ayran Şişe': 35,
+            'Portakal Suyu': 35,
+            'Künefe': 85,
+            'Sütlaç': 75,
+            'Katmer': 75
         },
         'Çalıkuşu Kirazlık': {
             'Tavuk Dürüm Ç.lavaş Döner(100gr)': 160,
             'Tavuk Dürüm Döner(50gr)': 80,
-            # ... (diğer yemekler burada)
+            'Et Dürüm Döner': 140,
+            'Pepsi kola kutu': 40,
+            'Kola': 30,
+            'Ayran': 25,
+            'Ice tea şeftali': 40
         }
     }
 
@@ -161,19 +215,8 @@ with col2:
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
 
-        # Tüm siparişler
-        st.subheader("Tüm Siparişler")
-        st.dataframe(df)
-
-        # Toplam tutar
-        toplam_tutar = df['fiyat'].sum()
-        st.metric("Toplam Tutar", f"{toplam_tutar} TL")
-
-        # Siparişleri temizleme butonu
-        if st.button("Siparişleri Temizle"):
-            conn.execute('DELETE FROM siparisler')
-            conn.commit()
-            st.success("Tüm siparişler temizlendi!")
-            st.experimental_rerun()  # Eğer bu çalışmıyorsa, sadece refresh butonu ekleyin
     else:
-        st.info("Henüz sipariş bulunmamaktadır.")
+        st.warning("Henüz sipariş verilmedi!")
+
+# Veritabanı bağlantısını kapat
+conn.close()
