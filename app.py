@@ -4,6 +4,7 @@ import sqlite3
 from datetime import datetime, timedelta
 import io
 import xlsxwriter
+import time
 
 # SQLite veritabanı bağlantısı
 conn = sqlite3.connect('siparisler.db')
@@ -72,123 +73,144 @@ if 'restoranlar' not in st.session_state:
 # Başlık
 st.title("🍽️ Borsan Ar-Ge Yemek Sipariş Sistemi")
 
-# Sidebar - Yeni Restoran ve Menü Ekleme
-with st.sidebar:
-    st.header("Restoran Yönetimi")
+# Sipariş için süre ayarı (10 dakika)
+if 'siparis_kapanma_zamani' not in st.session_state:
+    st.session_state.siparis_kapanma_zamani = datetime.now() + timedelta(minutes=10)
 
-    # Yeni restoran ekleme
-    new_restaurant = st.text_input("Yeni Restoran")
-    if st.button("Restoran Ekle") and new_restaurant:
-        if new_restaurant not in st.session_state.restoranlar:
-            st.session_state.restoranlar[new_restaurant] = {}
-            st.success(f"{new_restaurant} başarıyla eklendi!")
-        else:
-            st.error("Bu restoran zaten mevcut!")
-
-    # Mevcut restorana yemek ekleme
-    st.subheader("Menü Yönetimi")
-    restaurant_select = st.selectbox("Restoran Seçin", options=list(st.session_state.restoranlar.keys()))
-
-    new_item = st.text_input("Yemek")
-    new_price = st.number_input("Fiyat (TL)", min_value=0, value=0)
-
-    if st.button("Menüye Ekle") and new_item and new_price > 0:
-        st.session_state.restoranlar[restaurant_select][new_item] = new_price
-        st.success(f"{new_item} menüye eklendi!")
-
-# Ana sayfa - Sipariş verme
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    st.header("Sipariş Ver")
-
-    # Kullanıcı bilgileri ve sipariş formu
-    isim = st.text_input("Adınız")
-    secilen_restoran = st.selectbox("Restoran", options=list(st.session_state.restoranlar.keys()))
-
-    if secilen_restoran:
-        secilen_yemek = st.selectbox(
-            "Yemek",
-            options=list(st.session_state.restoranlar[secilen_restoran].keys())
-        )
-
-        if secilen_yemek:
-            fiyat = st.session_state.restoranlar[secilen_restoran][secilen_yemek]
-            st.write(f"Fiyat: {fiyat} TL")
-
-    not_girisi = st.text_input("Not (isteğe bağlı)")
-
-    if st.button("Sipariş Ver") and isim:
-        # Yeni siparişi veritabanına ekle
-        conn.execute('''
-            INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat, notlar) 
-            VALUES (?, ?, ?, ?, ?, ?)''', 
-            ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat, not_girisi))
-        conn.commit()
-        st.success("Siparişiniz alındı!")
-
-# Siparişleri görüntüleme
-with col2:
-    st.header("Günlük Siparişler")
-    # Veritabanından tüm siparişleri oku
-    df = pd.read_sql_query('SELECT * FROM siparisler', conn)
-
-    if not df.empty:
-        # Kişi bazlı toplam tutarlar
-        st.subheader("Kişi Bazlı Toplam")
-        kisi_bazli = df.groupby('isim')['fiyat'].sum().reset_index()
-        st.dataframe(kisi_bazli)
-
-        # Excel indirme butonları
-        col_a, col_b = st.columns(2)
-
-        with col_a:
-            # Tüm siparişlerin Excel'i
-            excel_data = to_excel(df)
-            st.download_button(
-                label="📥 Tüm Siparişleri İndir",
-                data=excel_data,
-                file_name=f'siparisler_{datetime.now().strftime("%Y%m%d")}.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-
-        with col_b:
-            # Kişi bazlı toplamların Excel'i
-            excel_data_summary = to_excel(kisi_bazli)
-            st.download_button(
-                label="📥 Özeti İndir",
-                data=excel_data_summary,
-                file_name=f'siparis_ozeti_{datetime.now().strftime("%Y%m%d")}.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-
-        # Tüm siparişler
-        st.subheader("Tüm Siparişler")
-        
-        # Sipariş ID'lerini içeren bir dropdown oluştur
-        selected_order_id = st.selectbox("Silmek için sipariş ID'sini seçin", options=df['id'].tolist())
-
-        if st.button("Sil"):
-            if selected_order_id:
-                conn.execute('DELETE FROM siparisler WHERE id = ?', (selected_order_id,))
-                conn.commit()
-                st.success(f"{selected_order_id} ID'li sipariş silindi!")
-                st.experimental_rerun()  # Sayfayı yeniden yükleyin
-            else:
-                st.warning("Silmek için bir sipariş seçmelisiniz.")
-
-        # Tüm siparişleri göster
-        st.dataframe(df[['id', 'tarih', 'isim', 'restoran', 'yemek', 'fiyat', 'notlar']])
-
-        # Toplam tutar
-        toplam_tutar = df['fiyat'].sum()
-        st.metric("Toplam Tutar", f"{toplam_tutar} TL")
-
-        # Siparişleri temizleme butonu
-        if st.button("Siparişleri Temizle"):
-            conn.execute('DELETE FROM siparisler')
-            conn.commit()
-            st.success("Tüm siparişler temizlendi!")
-            st.experimental_rerun()
+# Kronometreyi göstermek için zamanlayıcıyı hesapla
+def countdown_timer(end_time):
+    remaining_time = end_time - datetime.now()
+    if remaining_time > timedelta(0):
+        return str(remaining_time).split('.')[0]  # Sadece saat:dakika:saniye kısmını döndür
     else:
-        st.info("Henüz sipariş bulunmamaktadır.")
+        return "Zaman doldu!"
+
+# Kronometreyi göster
+st.sidebar.header("Sipariş Süresi")
+remaining_time = countdown_timer(st.session_state.siparis_kapanma_zamani)
+st.sidebar.write(f"Kalan Süre: {remaining_time}")
+
+# Eğer zaman dolmuşsa, sipariş verme alanını devre dışı bırak
+if remaining_time == "Zaman doldu!":
+    st.sidebar.error("Sipariş verme süresi dolmuştur!")
+else:
+    # Sidebar - Yeni Restoran ve Menü Ekleme
+    with st.sidebar:
+        st.header("Restoran Yönetimi")
+
+        # Yeni restoran ekleme
+        new_restaurant = st.text_input("Yeni Restoran")
+        if st.button("Restoran Ekle") and new_restaurant:
+            if new_restaurant not in st.session_state.restoranlar:
+                st.session_state.restoranlar[new_restaurant] = {}
+                st.success(f"{new_restaurant} başarıyla eklendi!")
+            else:
+                st.error("Bu restoran zaten mevcut!")
+
+        # Mevcut restorana yemek ekleme
+        st.subheader("Menü Yönetimi")
+        restaurant_select = st.selectbox("Restoran Seçin", options=list(st.session_state.restoranlar.keys()))
+
+        new_item = st.text_input("Yemek")
+        new_price = st.number_input("Fiyat (TL)", min_value=0, value=0)
+
+        if st.button("Menüye Ekle") and new_item and new_price > 0:
+            st.session_state.restoranlar[restaurant_select][new_item] = new_price
+            st.success(f"{new_item} menüye eklendi!")
+
+    # Ana sayfa - Sipariş verme
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        st.header("Sipariş Ver")
+
+        # Kullanıcı bilgileri ve sipariş formu
+        isim = st.text_input("Adınız")
+        secilen_restoran = st.selectbox("Restoran", options=list(st.session_state.restoranlar.keys()))
+
+        if secilen_restoran:
+            secilen_yemek = st.selectbox(
+                "Yemek",
+                options=list(st.session_state.restoranlar[secilen_restoran].keys())
+            )
+
+            if secilen_yemek:
+                fiyat = st.session_state.restoranlar[secilen_restoran][secilen_yemek]
+                st.write(f"Fiyat: {fiyat} TL")
+
+        not_girisi = st.text_input("Not (isteğe bağlı)")
+
+        if st.button("Sipariş Ver") and isim:
+            # Yeni siparişi veritabanına ekle
+            conn.execute('''
+                INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat, notlar) 
+                VALUES (?, ?, ?, ?, ?, ?)''', 
+                ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat, not_girisi))
+            conn.commit()
+            st.success("Siparişiniz alındı!")
+
+    # Siparişleri görüntüleme
+    with col2:
+        st.header("Günlük Siparişler")
+        # Veritabanından tüm siparişleri oku
+        df = pd.read_sql_query('SELECT * FROM siparisler', conn)
+
+        if not df.empty:
+            # Kişi bazlı toplam tutarlar
+            st.subheader("Kişi Bazlı Toplam")
+            kisi_bazli = df.groupby('isim')['fiyat'].sum().reset_index()
+            st.dataframe(kisi_bazli)
+
+            # Excel indirme butonları
+            col_a, col_b = st.columns(2)
+
+            with col_a:
+                # Tüm siparişlerin Excel'i
+                excel_data = to_excel(df)
+                st.download_button(
+                    label="📥 Tüm Siparişleri İndir",
+                    data=excel_data,
+                    file_name=f'siparisler_{datetime.now().strftime("%Y%m%d")}.xlsx',
+                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+
+            with col_b:
+                # Kişi bazlı toplamların Excel'i
+                excel_data_summary = to_excel(kisi_bazli)
+                st.download_button(
+                    label="📥 Özeti İndir",
+                    data=excel_data_summary,
+                    file_name=f'siparis_ozeti_{datetime.now().strftime("%Y%m%d")}.xlsx',
+                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+
+            # Tüm siparişler
+            st.subheader("Tüm Siparişler")
+            
+            # Sipariş ID'lerini içeren bir dropdown oluştur
+            selected_order_id = st.selectbox("Silmek için sipariş ID'sini seçin", options=df['id'].tolist())
+
+            if st.button("Sil"):
+                if selected_order_id:
+                    conn.execute('DELETE FROM siparisler WHERE id = ?', (selected_order_id,))
+                    conn.commit()
+                    st.success(f"{selected_order_id} ID'li sipariş silindi!")
+                    st.experimental_rerun()  # Sayfayı yeniden yükleyin
+                else:
+                    st.warning("Silmek için bir sipariş seçmelisiniz.")
+
+            # Tüm siparişleri göster
+            st.dataframe(df[['id', 'tarih', 'isim', 'restoran', 'yemek', 'fiyat', 'notlar']])
+
+            # Toplam tutar
+            toplam_tutar = df['fiyat'].sum()
+            st.metric("Toplam Tutar", f"{toplam_tutar} TL")
+
+            # Siparişleri temizleme butonu
+            if st.button("Siparişleri Temizle"):
+                conn.execute('DELETE FROM siparisler')
+                conn.commit()
+                st.success("Tüm siparişler temizlendi!")
+                st.experimental_rerun()
+        else:
+            st.info("Henüz sipariş bulunmamaktadır.")
