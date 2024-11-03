@@ -165,8 +165,8 @@ with col2:
         # Tüm siparişler
         st.subheader("Tüm Siparişler")
         
-        # Tabloda gösterilecek siparişleri ve silme seçeneğini oluştur
-        selected_order_id = st.selectbox("Silmek için sipariş seçin", options=df['id'].tolist(), format_func=lambda x: df[df['id'] == x]['yemek'].values[0] if x in df['id'].values else "Seçiniz")
+        # Sipariş ID'lerini içeren bir dropdown oluştur
+        selected_order_id = st.selectbox("Silmek için sipariş ID'sini seçin", options=df['id'].tolist())
 
         if st.button("Sil"):
             if selected_order_id:
@@ -178,7 +178,7 @@ with col2:
                 st.warning("Silmek için bir sipariş seçmelisiniz.")
 
         # Tüm siparişleri göster
-        st.dataframe(df[['tarih', 'isim', 'restoran', 'yemek', 'fiyat', 'notlar']])
+        st.dataframe(df[['id', 'tarih', 'isim', 'restoran', 'yemek', 'fiyat', 'notlar']])
 
         # Toplam tutar
         toplam_tutar = df['fiyat'].sum()
