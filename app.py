@@ -1,10 +1,9 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 import io
 import xlsxwriter
-from datetime import timedelta
 
 # SQLite veritabanı bağlantısı
 conn = sqlite3.connect('siparisler.db')
@@ -18,7 +17,8 @@ def create_table():
         isim TEXT,
         restoran TEXT,
         yemek TEXT,
-        fiyat REAL
+        fiyat REAL,
+        not TEXT
     )
     ''')
     conn.commit()
@@ -43,6 +43,7 @@ def to_excel(df):
         worksheet.set_column('C:C', 10)  # Restoran sütunu
         worksheet.set_column('D:D', 15)  # Yemek sütunu
         worksheet.set_column('E:E', 12)  # Fiyat sütunu
+        worksheet.set_column('F:F', 50)  # Not sütunu
 
         # Fiyat sütununa format uygula
         worksheet.set_column('E:E', 12, para_format)
@@ -119,7 +120,6 @@ if 'restoranlar' not in st.session_state:
             'Kola': 30,
             'Ayran': 25,
             'Ice tea şeftali': 40
-
         }
     }
 
@@ -173,13 +173,13 @@ with col1:
     not_girisi = st.text_input("Not (isteğe bağlı)")
 
     if st.button("Sipariş Ver") and isim:
-                # Yeni siparişi veritabanına ekle
-                conn.execute('''
-                    INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat, not) 
-                    VALUES (?, ?, ?, ?, ?, ?)''', 
-                    ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat, not_girisi))
-                conn.commit()
-                st.success("Siparişiniz alındı!")
+        # Yeni siparişi veritabanına ekle
+        conn.execute('''
+            INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat, not) 
+            VALUES (?, ?, ?, ?, ?, ?)''', 
+            ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat, not_girisi))
+        conn.commit()
+        st.success("Siparişiniz alındı!")
 
 # Siparişleri görüntüleme
 with col2:
@@ -226,9 +226,9 @@ with col2:
 
         # Siparişleri temizleme butonu
         if st.button("Siparişleri Temizle"):
-           conn.execute('DELETE FROM siparisler')
-           conn.commit()
-           st.success("Tüm siparişler temizlendi!")
-           st.experimental_rerun()
+            conn.execute('DELETE FROM siparisler')
+            conn.commit()
+            st.success("Tüm siparişler temizlendi!")
+            st.experimental_rerun()
     else:
         st.info("Henüz sipariş bulunmamaktadır.")
