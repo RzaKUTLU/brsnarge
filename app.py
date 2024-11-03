@@ -164,16 +164,24 @@ with col2:
 
         # Tüm siparişler
         st.subheader("Tüm Siparişler")
+        
+        # Silme butonları için bir liste oluştur
+        delete_buttons = []
+        
         for index, row in df.iterrows():
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.write(f"**Sipariş ID:** {row['id']}, **İsim:** {row['isim']}, **Restoran:** {row['restoran']}, **Yemek:** {row['yemek']}, **Fiyat:** {row['fiyat']} TL, **Notlar:** {row['notlar']}")
-            with col2:
-                if st.button("Sil", key=row['id']):  # Her sipariş için benzersiz bir anahtar kullan
-                    conn.execute('DELETE FROM siparisler WHERE id = ?', (row['id'],))
-                    conn.commit()
-                    st.success(f"{row['id']} ID'li sipariş silindi!")
-                    st.experimental_rerun()  # Sayfayı yeniden yükleyin
+            delete_buttons.append(st.button("Sil", key=row['id']))  # Her sipariş için benzersiz bir anahtar kullan
+
+        # Siparişleri ve silme butonlarını tablo şeklinde göster
+        df['Sil'] = delete_buttons
+        st.dataframe(df)
+
+        # Silme işlemi
+        for index, row in df.iterrows():
+            if delete_buttons[index]:  # Eğer butona tıklanmışsa
+                conn.execute('DELETE FROM siparisler WHERE id = ?', (row['id'],))
+                conn.commit()
+                st.success(f"{row['id']} ID'li sipariş silindi!")
+                st.experimental_rerun()  # Sayfayı yeniden yükleyin
 
         # Toplam tutar
         toplam_tutar = df['fiyat'].sum()
