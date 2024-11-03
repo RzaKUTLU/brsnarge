@@ -173,7 +173,7 @@ with col2:
                 conn.execute('DELETE FROM siparisler WHERE id = ?', (selected_order_id,))
                 conn.commit()
                 st.success(f"{selected_order_id} ID'li sipariş silindi!")
-                st.experimental_rerun()  # Sayfayı yeniden yükleyin
+                st.legacy_caching.clear_cache()  # Sayfayı yeniden yükleyin
             else:
                 st.warning("Silmek için bir sipariş seçmelisiniz.")
 
@@ -189,6 +189,6 @@ with col2:
             conn.execute('DELETE FROM siparisler')
             conn.commit()
             st.success("Tüm siparişler temizlendi!")
-            st.experimental_rerun()
+            st.legacy_caching.clear_cache()  # Sayfayı yeniden yükleyin
     else:
         st.info("Henüz sipariş bulunmamaktadır.")
