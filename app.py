@@ -5,9 +5,17 @@ from datetime import datetime
 import io
 import xlsxwriter
 from datetime import timedelta
+import os  # Ek olarak dosya işlemleri için os modülünü ekliyoruz.
 
 # SQLite veritabanı bağlantısı
-conn = sqlite3.connect('siparisler.db')
+db_file = 'siparisler.db'
+
+# Eğer veritabanı dosyası varsa sil
+if os.path.exists(db_file):
+    os.remove(db_file)
+
+# Veritabanı bağlantısını aç
+conn = sqlite3.connect(db_file)
 
 # Siparişler tablosunu oluştur
 def create_table():
@@ -182,41 +190,29 @@ with col1:
 
 # Siparişleri görüntüleme
 with col2:
-    st.header("Günlük Siparişler")
-    # Veritabanından tüm siparişleri oku
-    df = pd.read_sql_query('SELECT * FROM siparisler', conn)
+    st.header("Siparişleri Görüntüle")
 
-    if not df.empty:
-        # Kişi bazlı toplam tutarlar
-        st.subheader("Kişi Bazlı Toplam")
-        kisi_bazli = df.groupby('isim')['fiyat'].sum().reset_index()
-        st.dataframe(kisi_bazli)
-
-        # Excel indirme butonları
-        col_a, col_b = st.columns(2)
-
-        with col_a:
-            # Tüm siparişlerin Excel'i
-            excel_data = to_excel(df)
+    if st.button("Siparişleri Göster"):
+        siparisler_df = pd.read_sql('SELECT * FROM siparisler', conn)
+        if not siparisler_df.empty:
+            st.dataframe(siparisler_df)
+            # Excel indirme
+            excel_data = to_excel(siparisler_df)
             st.download_button(
-                label="📥 Tüm Siparişleri İndir",
+                label="Excel Olarak İndir",
                 data=excel_data,
                 file_name=f'siparisler_{datetime.now().strftime("%Y%m%d")}.xlsx',
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
+        else:
+            st.warning("Henüz sipariş verilmedi!")
 
-        with col_b:
-            # Kişi bazlı toplamların Excel'i
-            excel_data_summary = to_excel(kisi_bazli)
-            st.download_button(
-                label="📥 Özeti İndir",
-                data=excel_data_summary,
-                file_name=f'siparis_ozeti_{datetime.now().strftime("%Y%m%d")}.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-
-    else:
-        st.warning("Henüz sipariş verilmedi!")
+# Siparişleri temizleme
+if st.button("Siparişleri Temizle"):
+    conn.execute('DELETE FROM siparisler')
+    conn.commit()
+    st.success("Tüm siparişler temizlendi!")
+    st.experimental_rerun()
 
 # Veritabanı bağlantısını kapat
 conn.close()
