@@ -170,6 +170,8 @@ with col1:
             fiyat = st.session_state.restoranlar[secilen_restoran][secilen_yemek]
             st.write(f"Fiyat: {fiyat} TL")
 
+    not_girisi = st.text_input("Not (isteğe bağlı)")
+
             if st.button("Sipariş Ver") and isim:
                 # Yeni siparişi veritabanına ekle
                 conn.execute('''
