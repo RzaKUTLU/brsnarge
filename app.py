@@ -19,7 +19,7 @@ def create_table():
         restoran TEXT,
         yemek TEXT,
         fiyat REAL,
-        not TEXT
+        "not" TEXT
     )
     ''')
     conn.commit()
