@@ -20,9 +20,14 @@ def create_table():
             restoran TEXT,
             yemek TEXT,
             fiyat REAL,
-            not_ TEXT  -- not kelimesinin yerine not_ kullandık
+            not_ TEXT
         )
         ''')
+        conn.commit()
+    except sqlite3.OperationalError as e:
+        st.error(f"Veritabanı hatası: {e}")
+    except Exception as e:
+        st.error(f"Beklenmedik bir hata oluştu: {e}")
         conn.commit()
     except Exception as e:
         st.error(f"Veritabanı hatası: {e}")
