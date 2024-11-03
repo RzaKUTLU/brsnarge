@@ -165,20 +165,20 @@ with col2:
         # Tüm siparişler
         st.subheader("Tüm Siparişler")
         
-        # Silme butonları için bir liste oluştur
-        delete_buttons = []
-        
-        for index, row in df.iterrows():
-            if st.button("Sil", key=row['id']):  # Her sipariş için benzersiz bir anahtar kullan
-                conn.execute('DELETE FROM siparisler WHERE id = ?', (row['id'],))
-                conn.commit()
-                st.success(f"{row['id']} ID'li sipariş silindi!")
-                st.experimental_rerun()  # Sayfayı yeniden yükleyin
-            delete_buttons.append(False)  # Buton durumunu güncelle
+        # Tabloda gösterilecek siparişleri ve silme seçeneğini oluştur
+        selected_order_id = st.selectbox("Silmek için sipariş seçin", options=df['id'].tolist(), format_func=lambda x: df[df['id'] == x]['yemek'].values[0] if x in df['id'].values else "Seçiniz")
 
-        # Sil butonlarını tabloya ekle
-        df['Sil'] = delete_buttons
-        st.dataframe(df[['tarih', 'isim', 'restoran', 'yemek', 'fiyat', 'notlar', 'Sil']])
+        if st.button("Sil"):
+            if selected_order_id:
+                conn.execute('DELETE FROM siparisler WHERE id = ?', (selected_order_id,))
+                conn.commit()
+                st.success(f"{selected_order_id} ID'li sipariş silindi!")
+                st.experimental_rerun()  # Sayfayı yeniden yükleyin
+            else:
+                st.warning("Silmek için bir sipariş seçmelisiniz.")
+
+        # Tüm siparişleri göster
+        st.dataframe(df[['tarih', 'isim', 'restoran', 'yemek', 'fiyat', 'notlar']])
 
         # Toplam tutar
         toplam_tutar = df['fiyat'].sum()
