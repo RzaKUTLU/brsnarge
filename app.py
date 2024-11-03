@@ -21,6 +21,21 @@ def create_table():
         notlar TEXT
     )
     ''')
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS restoranlar (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        isim TEXT UNIQUE
+    )
+    ''')
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS menuler (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        restoran_id INTEGER,
+        yemek TEXT,
+        fiyat REAL,
+        FOREIGN KEY (restoran_id) REFERENCES restoranlar(id)
+    )
+    ''')
     conn.commit()
 
 create_table()
@@ -53,76 +68,22 @@ def to_excel(df):
 # Sayfa yapılandırması
 st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
 
-# Restoranları sakla
+# Restoranları ve menüleri yükle
+def load_restaurants_and_menus():
+    restoranlar_df = pd.read_sql_query('SELECT * FROM restoranlar', conn)
+    menuler_df = pd.read_sql_query('SELECT * FROM menuler', conn)
+
+    restoranlar = {row['isim']: {} for index, row in restoranlar_df.iterrows()}
+    for index, row in menuler_df.iterrows():
+        restoran = restoranlar_df.loc[restoranlar_df['id'] == row['restoran_id']]
+        if not restoran.empty:
+            restoran_isim = restoran.iloc[0]['isim']
+            restoranlar[restoran_isim][row['yemek']] = row['fiyat']
+
+    return restoranlar
+
 if 'restoranlar' not in st.session_state:
-    st.session_state.restoranlar = {
-        'Nazar Petrol': {
-            'Adana Dürüm': 170,
-            'Adana Porsiyon': 240,
-            'Tavuk Dürüm': 155,
-            'Kanat Porsiyon': 200,
-            'Tavuk Porsiyon': 150,
-            'Yarım Tavuk': 130,
-            'Yarım Çeyrek Tavuk': 150,
-            'Bütün Ekmek Tavuk': 170,
-            'Ciğer Dürüm': 170,
-            'Ciğer Porsiyon': 240,
-            'Et Dürüm': 190,
-            'Et Porsiyon': 270,
-            'Köfte Porsiyon': 240,
-            'Yarım Köfte': 170,
-            'Yarım Çeyrek Köfte': 170,
-            'Bütün Köfte': 190,
-            'Kapalı Pide': 90,
-            'Lahmacun': 80,
-            'Açık Kıymalı': 170,
-            'Açık Kaşarlı': 180,
-            'Açık Karışık': 220,
-            'Açık Sucuklu': 230,
-            'Açık Pastırmalı': 230,
-            'Açık Beyaz Peynirli': 190,
-            'Kapalı Beyaz Peynirli': 170,
-            'Yağlı': 140,
-            'Extra Lavaş': 10,
-            'Extra Yumurta': 10,
-            'Extra Kaşar': 25,
-            'Çoban Salata': 30,
-            'Ezme': 20,
-            'Patlıcan Salatası': 50,
-            'Tropicana M. Suyu': 35,
-            '2.5 Lt Kola': 70,
-            '1 Lt Kola': 50,
-            'Kutu Kola': 35,
-            'Şalgam': 30,
-            'Şişe Kola': 50,
-            '1 Lt Fanta': 50,
-            '2.5 Lt Fanta': 70,
-            'Kutu Fanta': 30,
-            'Sprite': 30,
-            'Şişe Zero': 40,
-            'Türk Kahvesi': 40,
-            'Su': 5,
-            'Çay': 10,
-            'Ice Tea Şeftali': 35,
-            'Açık Ayran': 35,
-            'Ayran Pet': 35,
-            'Ayran Şişe': 35,
-            'Portakal Suyu': 35,
-            'Künefe': 85,
-            'Sütlaç': 75,
-            'Katmer': 75
-            # ... diğer yemekler
-        },
-        'Çalıkuşu Kirazlık': {
-            'Tavuk Dürüm Ç.lavaş Döner(100gr)': 160,
-            'Tavuk Dürüm Döner(50gr)': 80,
-            'Et Dürüm Döner': 140,
-            'Pepsi kola kutu': 40,
-            'Kola': 30,
-            'Ayran': 25,
-            'Ice tea şeftali': 40
-        }
-    }
+    st.session_state.restoranlar = load_restaurants_and_menus()
 
 # Başlık
 st.title("🍽️ Borsan Ar-Ge Yemek Sipariş Sistemi")
@@ -134,10 +95,12 @@ with st.sidebar:
     # Yeni restoran ekleme
     new_restaurant = st.text_input("Yeni Restoran")
     if st.button("Restoran Ekle") and new_restaurant:
-        if new_restaurant not in st.session_state.restoranlar:
+        try:
+            conn.execute('INSERT INTO restoranlar (isim) VALUES (?)', (new_restaurant,))
+            conn.commit()
             st.session_state.restoranlar[new_restaurant] = {}
             st.success(f"{new_restaurant} başarıyla eklendi!")
-        else:
+        except sqlite3.IntegrityError:
             st.error("Bu restoran zaten mevcut!")
 
     # Mevcut restorana yemek ekleme
@@ -148,6 +111,9 @@ with st.sidebar:
     new_price = st.number_input("Fiyat (TL)", min_value=0, value=0)
 
     if st.button("Menüye Ekle") and new_item and new_price > 0:
+        restoran_id = pd.read_sql_query('SELECT id FROM restoranlar WHERE isim = ?', (restaurant_select,)).iloc[0]['id']
+        conn.execute('INSERT INTO menuler (restoran_id, yemek, fiyat) VALUES (?, ?, ?)', (restoran_id, new_item, new_price))
+        conn.commit()
         st.session_state.restoranlar[restaurant_select][new_item] = new_price
         st.success(f"{new_item} menüye eklendi!")
 
