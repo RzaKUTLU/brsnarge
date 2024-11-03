@@ -177,7 +177,7 @@ with col1:
     if st.button("Sipariş Ver") and isim:
                 # Yeni siparişi veritabanına ekle
                 conn.execute('''
-                    INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat, "not") 
+                    INSERT INTO siparisler ("tarih", "isim", "restoran", "yemek", "fiyat", "not") 
                     VALUES (?, ?, ?, ?, ?, ?)''', 
                     ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat, not_girisi))
                 conn.commit()
