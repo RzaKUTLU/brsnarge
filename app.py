@@ -174,7 +174,7 @@ with col1:
                 conn.execute('''
                     INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat) 
                     VALUES (?, ?, ?, ?, ?)''', 
-                    (datetime.now().strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat))
+                    ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat))
                 conn.commit()
                 st.success("Siparişiniz alındı!")
 
