@@ -224,8 +224,9 @@ with col2:
 
         # Siparişleri temizleme butonu
         if st.button("Siparişleri Temizle"):
-            conn.execute('DELETE FROM siparisler')
-            conn.commit()
+        conn.execute('DELETE FROM siparisler')
+        conn.commit()
+        st.success("Tüm siparişler temizlendi!")
             st.experimental_rerun()
     else:
         st.info("Henüz sipariş bulunmamaktadır.")
