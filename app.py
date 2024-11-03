@@ -4,6 +4,7 @@ import sqlite3
 from datetime import datetime
 import io
 import xlsxwriter
+from datetime import timedelta
 
 # SQLite veritabanı bağlantısı
 conn = sqlite3.connect('siparisler.db')
