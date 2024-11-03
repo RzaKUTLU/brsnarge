@@ -1,14 +1,9 @@
-
 import streamlit as st
 import pandas as pd
 import sqlite3
 from datetime import datetime
-import pytz
 import io
 import xlsxwriter
-
-# Türkiye saat dilimi
-turkey_tz = pytz.timezone('Europe/Istanbul')
 
 # SQLite veritabanı bağlantısı
 conn = sqlite3.connect('siparisler.db')
@@ -123,6 +118,7 @@ if 'restoranlar' not in st.session_state:
             'Kola': 30,
             'Ayran': 25,
             'Ice tea şeftali': 40
+
         }
     }
 
@@ -174,13 +170,11 @@ with col1:
             st.write(f"Fiyat: {fiyat} TL")
 
             if st.button("Sipariş Ver") and isim:
-                # Türkiye saatine göre tarih ve saati al
-                current_time = datetime.now(turkey_tz).strftime("%Y-%m-%d %H:%M")
-
+                # Yeni siparişi veritabanına ekle
                 conn.execute('''
                     INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat) 
                     VALUES (?, ?, ?, ?, ?)''', 
-                    (current_time, isim, secilen_restoran, secilen_yemek, fiyat))
+                    (datetime.now().strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat))
                 conn.commit()
                 st.success("Siparişiniz alındı!")
 
@@ -205,17 +199,32 @@ with col2:
             st.download_button(
                 label="📥 Tüm Siparişleri İndir",
                 data=excel_data,
-                file_name=f'siparisler_{datetime.now(turkey_tz).strftime("%Y%m%d")}.xlsx',
+                file_name=f'siparisler_{datetime.now().strftime("%Y%m%d")}.xlsx',
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
+
         with col_b:
             # Kişi bazlı toplamların Excel'i
-            excel_data_kisi_bazli = to_excel(kisi_bazli)
+            excel_data_summary = to_excel(kisi_bazli)
             st.download_button(
-                label="📥 Kişi Bazlı Toplamları İndir",
-                data=excel_data_kisi_bazli,
-                file_name=f'kisi_bazli_{datetime.now(turkey_tz).strftime("%Y%m%d")}.xlsx',
+                label="📥 Özeti İndir",
+                data=excel_data_summary,
+                file_name=f'siparis_ozeti_{datetime.now().strftime("%Y%m%d")}.xlsx',
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
+
+        # Tüm siparişler
+        st.subheader("Tüm Siparişler")
+        st.dataframe(df)
+
+        # Toplam tutar
+        toplam_tutar = df['fiyat'].sum()
+        st.metric("Toplam Tutar", f"{toplam_tutar} TL")
+
+        # Siparişleri temizleme butonu
+        if st.button("Siparişleri Temizle"):
+            conn.execute('DELETE FROM siparisler')
+            conn.commit()
+            st.experimental_rerun()
     else:
-        st.write("Henüz sipariş yok.")
+        st.info("Henüz sipariş bulunmamaktadır.")
