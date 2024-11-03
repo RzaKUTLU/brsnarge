@@ -1,27 +1,31 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime
 import io
 import xlsxwriter
+from datetime import timedelta
 
 # SQLite veritabanı bağlantısı
 conn = sqlite3.connect('siparisler.db')
 
 # Siparişler tablosunu oluştur
 def create_table():
-    conn.execute('''
-    CREATE TABLE IF NOT EXISTS siparisler (
-        id INTEGER PRIMARY KEY,
-        tarih TEXT,
-        isim TEXT,
-        restoran TEXT,
-        yemek TEXT,
-        fiyat REAL,
-        not TEXT
-    )
-    ''')
-    conn.commit()
+    try:
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS siparisler (
+            id INTEGER PRIMARY KEY,
+            tarih TEXT,
+            isim TEXT,
+            restoran TEXT,
+            yemek TEXT,
+            fiyat REAL,
+            not_ TEXT  -- not kelimesinin yerine not_ kullandık
+        )
+        ''')
+        conn.commit()
+    except Exception as e:
+        st.error(f"Veritabanı hatası: {e}")
 
 create_table()
 
@@ -43,7 +47,7 @@ def to_excel(df):
         worksheet.set_column('C:C', 10)  # Restoran sütunu
         worksheet.set_column('D:D', 15)  # Yemek sütunu
         worksheet.set_column('E:E', 12)  # Fiyat sütunu
-        worksheet.set_column('F:F', 50)  # Not sütunu
+        worksheet.set_column('F:F', 30)  # Not sütunu
 
         # Fiyat sütununa format uygula
         worksheet.set_column('E:E', 12, para_format)
@@ -57,60 +61,60 @@ st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wid
 if 'restoranlar' not in st.session_state:
     st.session_state.restoranlar = {
         'Nazar Petrol': {
-           'Adana Dürüm': 170,
-           'Adana Porsiyon': 240,
-           'Tavuk Dürüm': 155,
-           'Kanat Porsiyon': 200,
-           'Tavuk Porsiyon': 150,
-           'Yarım Tavuk': 130,
-           'Yarım Çeyrek Tavuk': 150,
-           'Bütün Ekmek Tavuk': 170,
-           'Ciğer Dürüm': 170,
-           'Ciğer Porsiyon': 240,
-           'Et Dürüm': 190,
-           'Et Porsiyon': 270,
-           'Köfte Porsiyon': 240,
-           'Yarım Köfte': 170,
-           'Yarım Çeyrek Köfte': 170,
-           'Bütün Köfte': 190,
-           'Kapalı Pide': 90,
-           'Lahmacun': 80,
-           'Açık Kıymalı': 170,
-           'Açık Kaşarlı': 180,
-           'Açık Karışık': 220,
-           'Açık Sucuklu': 230,
-           'Açık Pastırmalı': 230,
-           'Açık Beyaz Peynirli': 190,
-           'Kapalı Beyaz Peynirli': 170,
-           'Yağlı': 140,
-           'Extra Lavaş': 10,
-           'Extra Yumurta': 10,
-           'Extra Kaşar': 25,
-           'Çoban Salata': 30,
-           'Ezme': 20,
-           'Patlıcan Salatası': 50,
-           'Tropicana M. Suyu': 35,
-           '2.5 Lt Kola': 70,
-           '1 Lt Kola': 50,
-           'Kutu Kola': 35,
-           'Şalgam': 30,
-           'Şişe Kola': 50,
-           '1 Lt Fanta': 50,
-           '2.5 Lt Fanta': 70,
-           'Kutu Fanta': 30,
-           'Sprite': 30,
-           'Şişe Zero': 40,
-           'Türk Kahvesi': 40,
-           'Su': 5,
-           'Çay': 10,
-           'Ice Tea Şeftali': 35,
-           'Açık Ayran': 35,
-           'Ayran Pet': 35,
-           'Ayran Şişe': 35,
-           'Portakal Suyu': 35,
-           'Künefe': 85,
-           'Sütlaç': 75,
-           'Katmer': 75
+            'Adana Dürüm': 170,
+            'Adana Porsiyon': 240,
+            'Tavuk Dürüm': 155,
+            'Kanat Porsiyon': 200,
+            'Tavuk Porsiyon': 150,
+            'Yarım Tavuk': 130,
+            'Yarım Çeyrek Tavuk': 150,
+            'Bütün Ekmek Tavuk': 170,
+            'Ciğer Dürüm': 170,
+            'Ciğer Porsiyon': 240,
+            'Et Dürüm': 190,
+            'Et Porsiyon': 270,
+            'Köfte Porsiyon': 240,
+            'Yarım Köfte': 170,
+            'Yarım Çeyrek Köfte': 170,
+            'Bütün Köfte': 190,
+            'Kapalı Pide': 90,
+            'Lahmacun': 80,
+            'Açık Kıymalı': 170,
+            'Açık Kaşarlı': 180,
+            'Açık Karışık': 220,
+            'Açık Sucuklu': 230,
+            'Açık Pastırmalı': 230,
+            'Açık Beyaz Peynirli': 190,
+            'Kapalı Beyaz Peynirli': 170,
+            'Yağlı': 140,
+            'Extra Lavaş': 10,
+            'Extra Yumurta': 10,
+            'Extra Kaşar': 25,
+            'Çoban Salata': 30,
+            'Ezme': 20,
+            'Patlıcan Salatası': 50,
+            'Tropicana M. Suyu': 35,
+            '2.5 Lt Kola': 70,
+            '1 Lt Kola': 50,
+            'Kutu Kola': 35,
+            'Şalgam': 30,
+            'Şişe Kola': 50,
+            '1 Lt Fanta': 50,
+            '2.5 Lt Fanta': 70,
+            'Kutu Fanta': 30,
+            'Sprite': 30,
+            'Şişe Zero': 40,
+            'Türk Kahvesi': 40,
+            'Su': 5,
+            'Çay': 10,
+            'Ice Tea Şeftali': 35,
+            'Açık Ayran': 35,
+            'Ayran Pet': 35,
+            'Ayran Şişe': 35,
+            'Portakal Suyu': 35,
+            'Künefe': 85,
+            'Sütlaç': 75,
+            'Katmer': 75
         },
         'Çalıkuşu Kirazlık': {
             'Tavuk Dürüm Ç.lavaş Döner(100gr)': 160,
@@ -175,7 +179,7 @@ with col1:
     if st.button("Sipariş Ver") and isim:
         # Yeni siparişi veritabanına ekle
         conn.execute('''
-            INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat, not) 
+            INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat, not_) 
             VALUES (?, ?, ?, ?, ?, ?)''', 
             ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat, not_girisi))
         conn.commit()
@@ -208,27 +212,13 @@ with col2:
 
         with col_b:
             # Kişi bazlı toplamların Excel'i
-            excel_data_summary = to_excel(kisi_bazli)
+            excel_kisi_data = to_excel(kisi_bazli)
             st.download_button(
-                label="📥 Özeti İndir",
-                data=excel_data_summary,
-                file_name=f'siparis_ozeti_{datetime.now().strftime("%Y%m%d")}.xlsx',
+                label="📥 Kişi Bazlı Toplamları İndir",
+                data=excel_kisi_data,
+                file_name=f'kisi_toplamlari_{datetime.now().strftime("%Y%m%d")}.xlsx',
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
 
-        # Tüm siparişler
-        st.subheader("Tüm Siparişler")
-        st.dataframe(df)
-
-        # Toplam tutar
-        toplam_tutar = df['fiyat'].sum()
-        st.metric("Toplam Tutar", f"{toplam_tutar} TL")
-
-        # Siparişleri temizleme butonu
-        if st.button("Siparişleri Temizle"):
-            conn.execute('DELETE FROM siparisler')
-            conn.commit()
-            st.success("Tüm siparişler temizlendi!")
-            st.experimental_rerun()
-    else:
-        st.info("Henüz sipariş bulunmamaktadır.")
+# Uygulamayı kapatırken veritabanı bağlantısını kapat
+conn.close()
