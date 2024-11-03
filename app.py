@@ -1,7 +1,8 @@
+
 import streamlit as st
 import pandas as pd
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 import io
 import xlsxwriter
@@ -122,7 +123,6 @@ if 'restoranlar' not in st.session_state:
             'Kola': 30,
             'Ayran': 25,
             'Ice tea şeftali': 40
-
         }
     }
 
@@ -174,12 +174,8 @@ with col1:
             st.write(f"Fiyat: {fiyat} TL")
 
             if st.button("Sipariş Ver") and isim:
-                # Saat dilimini alarak siparişi kaydet
+                # Türkiye saatine göre tarih ve saati al
                 current_time = datetime.now(turkey_tz).strftime("%Y-%m-%d %H:%M")
-                st.write(f"Şu anki Türkiye Saati: {current_time}")
-
-                # Saat düzeltilmesi gerekirse timedelta ile düzeltme yap
-                # current_time = (datetime.now(turkey_tz) + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M")
 
                 conn.execute('''
                     INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat) 
@@ -212,7 +208,6 @@ with col2:
                 file_name=f'siparisler_{datetime.now(turkey_tz).strftime("%Y%m%d")}.xlsx',
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
-
         with col_b:
             # Kişi bazlı toplamların Excel'i
             excel_data_kisi_bazli = to_excel(kisi_bazli)
