@@ -178,7 +178,7 @@ with col2:
                 st.warning("Silmek için bir sipariş seçmelisiniz.")
 
         # Tüm siparişleri göster
-        st.dataframe(df[['id', 'tarih', 'isim', 'restoran', 'yemek', 'fiyat', 'notlar']])
+        st.dataframe(df[['ID', 'Tarih', 'İsim', 'Restoran', 'Yemek', 'Fiyat', 'Notlar']])
 
         # Toplam tutar
         toplam_tutar = df['fiyat'].sum()
