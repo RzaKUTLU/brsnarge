@@ -39,8 +39,8 @@ def to_excel(df):
 
         # Sütun genişliklerini ayarla
         worksheet.set_column('A:A', 20)  # Tarih sütunu
-        worksheet.set_column('B:B', 10)  # İsim sütunu
-        worksheet.set_column('C:C', 10)  # Restoran sütunu
+        worksheet.set_column('B:B', 15)  # İsim sütunu
+        worksheet.set_column('C:C', 15)  # Restoran sütunu
         worksheet.set_column('D:D', 15)  # Yemek sütunu
         worksheet.set_column('E:E', 12)  # Fiyat sütunu
         worksheet.set_column('F:F', 12)  # Notlar sütunu
@@ -169,19 +169,16 @@ with col2:
         delete_buttons = []
         
         for index, row in df.iterrows():
-            delete_buttons.append(st.button("Sil", key=row['id']))  # Her sipariş için benzersiz bir anahtar kullan
-
-        # Siparişleri ve silme butonlarını tablo şeklinde göster
-        df['Sil'] = delete_buttons
-        st.dataframe(df)
-
-        # Silme işlemi
-        for index, row in df.iterrows():
-            if delete_buttons[index]:  # Eğer butona tıklanmışsa
+            if st.button("Sil", key=row['id']):  # Her sipariş için benzersiz bir anahtar kullan
                 conn.execute('DELETE FROM siparisler WHERE id = ?', (row['id'],))
                 conn.commit()
                 st.success(f"{row['id']} ID'li sipariş silindi!")
                 st.experimental_rerun()  # Sayfayı yeniden yükleyin
+            delete_buttons.append(False)  # Buton durumunu güncelle
+
+        # Sil butonlarını tabloya ekle
+        df['Sil'] = delete_buttons
+        st.dataframe(df[['tarih', 'isim', 'restoran', 'yemek', 'fiyat', 'notlar', 'Sil']])
 
         # Toplam tutar
         toplam_tutar = df['fiyat'].sum()
