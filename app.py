@@ -79,6 +79,7 @@ if 'restoranlar' not in st.session_state:
             'Açık Kaşarlı': 180,
             'Açık Karışık': 220,
             'Açık Sucuklu': 230,
+            'Kuşbaşı Pide': 230,
             'Açık Pastırmalı': 230,
             'Açık Beyaz Peynirli': 190,
             'Kapalı Beyaz Peynirli': 170,
