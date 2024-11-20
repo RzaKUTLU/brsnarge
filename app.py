@@ -4,28 +4,38 @@ import sqlite3
 from datetime import datetime, timedelta
 import io
 import xlsxwriter
+import os
+
+# Veritabanı dosyasının konumunu belirle
+DB_PATH = 'siparisler.db'
 
 # SQLite veritabanı bağlantısı
-conn = sqlite3.connect('siparisler.db')
+def get_db_connection():
+    try:
+        return sqlite3.connect(DB_PATH)
+    except sqlite3.Error as e:
+        st.error(f"Veritabanı bağlantı hatası: {e}")
+        return None
 
 # Siparişler tablosunu oluştur
-def create_table():
-    conn.execute('''
-    CREATE TABLE IF NOT EXISTS siparisler (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        tarih TEXT,
-        isim TEXT,
-        restoran TEXT,
-        yemek TEXT,
-        adet INTEGER,
-        birim_fiyat REAL,
-        toplam_fiyat REAL,
-        notlar TEXT
-    )
-    ''')
-    conn.commit()
-
-create_table()
+def create_table(conn):
+    try:
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS siparisler (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tarih TEXT,
+            isim TEXT,
+            restoran TEXT,
+            yemek TEXT,
+            adet INTEGER,
+            birim_fiyat REAL,
+            toplam_fiyat REAL,
+            notlar TEXT
+        )
+        ''')
+        conn.commit()
+    except sqlite3.Error as e:
+        st.error(f"Tablo oluşturma hatası: {e}")
 
 # Excel indirme fonksiyonu
 def to_excel(df):
@@ -60,7 +70,6 @@ st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wid
 # Restoranları sakla
 if 'restoranlar' not in st.session_state:
     st.session_state.restoranlar = {
-        # (Önceki restoran menüleri aynen kalacak)
         'Nazar Petrol': {
             'Adana Dürüm': 170,
             'Adana Porsiyon': 240,
@@ -74,6 +83,11 @@ if 'restoranlar' not in st.session_state:
             # Diğer menü öğeleri...
         }
     }
+
+# Veritabanı bağlantısını al ve tabloyu oluştur
+conn = get_db_connection()
+if conn:
+    create_table(conn)
 
 # Başlık
 st.title("🍽️ Borsan Ar-Ge Yemek Sipariş Sistemi")
@@ -127,89 +141,109 @@ with col1:
 
     not_girisi = st.text_input("Not (isteğe bağlı)")
 
-    if st.button("Sipariş Ver") and isim and secilen_yemek:
-        # Yeni siparişi veritabanına ekle
-        conn.execute('''
-            INSERT INTO siparisler (tarih, isim, restoran, yemek, adet, birim_fiyat, toplam_fiyat, notlar) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', 
-            ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), 
-             isim, secilen_restoran, secilen_yemek, adet, birim_fiyat, toplam_fiyat, not_girisi))
-        conn.commit()
-        st.success("Siparişiniz alındı!")
+    if st.button("Sipariş Ver") and isim and secilen_yemek and conn:
+        try:
+            # Yeni siparişi veritabanına ekle
+            conn.execute('''
+                INSERT INTO siparisler (tarih, isim, restoran, yemek, adet, birim_fiyat, toplam_fiyat, notlar) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', 
+                ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), 
+                 isim, secilen_restoran, secilen_yemek, adet, birim_fiyat, toplam_fiyat, not_girisi))
+            conn.commit()
+            st.success("Siparişiniz alındı!")
+        except sqlite3.Error as e:
+            st.error(f"Sipariş kaydedilemedi: {e}")
 
 # Siparişleri görüntüleme
 with col2:
     st.header("Günlük Siparişler")
+    
     # Veritabanından tüm siparişleri oku
-    df = pd.read_sql_query('SELECT * FROM siparisler', conn)
+    if conn:
+        try:
+            df = pd.read_sql_query('SELECT * FROM siparisler', conn)
 
-    if not df.empty:
-        # Kişi bazlı toplam tutarlar
-        st.subheader("Kişi Bazlı Toplam")
-        kisi_bazli = df.groupby('isim').agg({
-            'adet': 'sum', 
-            'toplam_fiyat': 'sum'
-        }).reset_index()
-        kisi_bazli.columns = ['İsim', 'Toplam Adet', 'Toplam Tutar']
-        st.dataframe(kisi_bazli)
+            if not df.empty:
+                # Kişi bazlı toplam tutarlar
+                st.subheader("Kişi Bazlı Toplam")
+                kisi_bazli = df.groupby('isim').agg({
+                    'adet': 'sum', 
+                    'toplam_fiyat': 'sum'
+                }).reset_index()
+                kisi_bazli.columns = ['İsim', 'Toplam Adet', 'Toplam Tutar']
+                st.dataframe(kisi_bazli)
 
-        # Excel indirme butonları
-        col_a, col_b = st.columns(2)
+                # Excel indirme butonları
+                col_a, col_b = st.columns(2)
 
-        with col_a:
-            # Tüm siparişlerin Excel'i
-            excel_data = to_excel(df)
-            st.download_button(
-                label="📥 Tüm Siparişleri İndir",
-                data=excel_data,
-                file_name=f'siparisler_{datetime.now().strftime("%Y%m%d")}.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
+                with col_a:
+                    # Tüm siparişlerin Excel'i
+                    excel_data = to_excel(df)
+                    st.download_button(
+                        label="📥 Tüm Siparişleri İndir",
+                        data=excel_data,
+                        file_name=f'siparisler_{datetime.now().strftime("%Y%m%d")}.xlsx',
+                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    )
 
-        with col_b:
-            # Kişi bazlı toplamların Excel'i
-            excel_data_summary = to_excel(kisi_bazli)
-            st.download_button(
-                label="📥 Özeti İndir",
-                data=excel_data_summary,
-                file_name=f'siparis_ozeti_{datetime.now().strftime("%Y%m%d")}.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
+                with col_b:
+                    # Kişi bazlı toplamların Excel'i
+                    excel_data_summary = to_excel(kisi_bazli)
+                    st.download_button(
+                        label="📥 Özeti İndir",
+                        data=excel_data_summary,
+                        file_name=f'siparis_ozeti_{datetime.now().strftime("%Y%m%d")}.xlsx',
+                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    )
 
-        # Tüm siparişler
-        st.subheader("Tüm Siparişler")
-        
-        # Sipariş ID'lerini içeren bir dropdown oluştur
-        selected_order_id = st.selectbox("Silmek için sipariş ID'sini seçin", options=df['id'].tolist())
+                # Tüm siparişler
+                st.subheader("Tüm Siparişler")
+                
+                # Sipariş ID'lerini içeren bir dropdown oluştur
+                selected_order_id = st.selectbox("Silmek için sipariş ID'sini seçin", options=df['id'].tolist())
 
-        if st.button("Sil"):
-            if selected_order_id:
-                conn.execute('DELETE FROM siparisler WHERE id = ?', (selected_order_id,))
-                conn.commit()
-                st.success(f"{selected_order_id} ID'li sipariş silindi!")
-                st.legacy_caching.clear_cache()  # Sayfayı yeniden yükleyin
+                if st.button("Sil"):
+                    if selected_order_id:
+                        try:
+                            conn.execute('DELETE FROM siparisler WHERE id = ?', (selected_order_id,))
+                            conn.commit()
+                            st.success(f"{selected_order_id} ID'li sipariş silindi!")
+                            st.experimental_rerun()
+                        except sqlite3.Error as e:
+                            st.error(f"Sipariş silinemedi: {e}")
+                    else:
+                        st.warning("Silmek için bir sipariş seçmelisiniz.")
+
+                # Tüm siparişleri göster
+                st.dataframe(df[['id', 'tarih', 'isim', 'restoran', 'yemek', 'adet', 'birim_fiyat', 'toplam_fiyat', 'notlar']])
+
+                # Toplam tutar ve toplam adet
+                toplam_tutar = df['toplam_fiyat'].sum()
+                toplam_adet = df['adet'].sum()
+                col_toplam_tutar, col_toplam_adet = st.columns(2)
+                
+                with col_toplam_tutar:
+                    st.metric("Toplam Tutar", f"{toplam_tutar} TL")
+                
+                with col_toplam_adet:
+                    st.metric("Toplam Adet", f"{toplam_adet}")
+
+                # Siparişleri temizleme butonu
+                if st.button("Siparişleri Temizle"):
+                    try:
+                        conn.execute('DELETE FROM siparisler')
+                        conn.commit()
+                        st.success("Tüm siparişler temizlendi!")
+                        st.experimental_rerun()
+                    except sqlite3.Error as e:
+                        st.error(f"Siparişler temizlenemedi: {e}")
             else:
-                st.warning("Silmek için bir sipariş seçmelisiniz.")
-
-        # Tüm siparişleri göster
-        st.dataframe(df[['id', 'tarih', 'isim', 'restoran', 'yemek', 'adet', 'birim_fiyat', 'toplam_fiyat', 'notlar']])
-
-        # Toplam tutar ve toplam adet
-        toplam_tutar = df['toplam_fiyat'].sum()
-        toplam_adet = df['adet'].sum()
-        col_toplam_tutar, col_toplam_adet = st.columns(2)
-        
-        with col_toplam_tutar:
-            st.metric("Toplam Tutar", f"{toplam_tutar} TL")
-        
-        with col_toplam_adet:
-            st.metric("Toplam Adet", f"{toplam_adet}")
-
-        # Siparişleri temizleme butonu
-        if st.button("Siparişleri Temizle"):
-            conn.execute('DELETE FROM siparisler')
-            conn.commit()
-            st.success("Tüm siparişler temizlendi!")
-            st.legacy_caching.clear_cache()  # Sayfayı yeniden yükleyin
+                st.info("Henüz sipariş bulunmamaktadır.")
+        except sqlite3.Error as e:
+            st.error(f"Siparişler görüntülenemedi: {e}")
     else:
-        st.info("Henüz sipariş bulunmamaktadır.")
+        st.error("Veritabanı bağlantısı kurulamadı.")
+
+# Uygulama kapandığında veritabanı bağlantısını kapat
+if conn:
+    conn.close()
