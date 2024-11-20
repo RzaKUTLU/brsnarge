@@ -17,9 +17,7 @@ def create_table():
         isim TEXT,
         restoran TEXT,
         yemek TEXT,
-        adet INTEGER,
-        birim_fiyat REAL,
-        toplam_fiyat REAL,
+        fiyat REAL,
         notlar TEXT
     )
     ''')
@@ -44,13 +42,11 @@ def to_excel(df):
         worksheet.set_column('B:B', 15)  # İsim sütunu
         worksheet.set_column('C:C', 15)  # Restoran sütunu
         worksheet.set_column('D:D', 15)  # Yemek sütunu
-        worksheet.set_column('E:E', 10)  # Adet sütunu
-        worksheet.set_column('F:F', 12)  # Birim Fiyat sütunu
-        worksheet.set_column('G:G', 12)  # Toplam Fiyat sütunu
-        worksheet.set_column('H:H', 12)  # Notlar sütunu
+        worksheet.set_column('E:E', 12)  # Fiyat sütunu
+        worksheet.set_column('F:F', 12)  # Notlar sütunu
 
-        # Fiyat sütunlarına format uygula
-        worksheet.set_column('F:G', 12, para_format)
+        # Fiyat sütununa format uygula
+        worksheet.set_column('E:E', 12, para_format)
 
     return output.getvalue()
 
@@ -60,18 +56,71 @@ st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wid
 # Restoranları sakla
 if 'restoranlar' not in st.session_state:
     st.session_state.restoranlar = {
-        # (Önceki restoran menüleri aynen kalacak)
         'Nazar Petrol': {
-            'Adana Dürüm': 170,
+'Adana Dürüm': 170,
             'Adana Porsiyon': 240,
             'Tavuk Dürüm': 155,
+            'Kanat Porsiyon': 200,
+            'Tavuk Porsiyon': 150,
+            'Yarım Tavuk': 130,
+            'Yarım Çeyrek Tavuk': 150,
+            'Bütün Ekmek Tavuk': 170,
+            'Ciğer Dürüm': 170,
+            'Ciğer Porsiyon': 240,
+            'Et Dürüm': 190,
+            'Et Porsiyon': 270,
+            'Köfte Porsiyon': 240,
+            'Yarım Köfte': 170,
+            'Yarım Çeyrek Köfte': 170,
+            'Bütün Köfte': 190,
+            'Kapalı Pide': 90,
             'Lahmacun': 80,
-            # Diğer menü öğeleri...
+            'Açık Kıymalı': 170,
+            'Açık Kaşarlı': 180,
+            'Açık Karışık': 220,
+            'Açık Sucuklu': 230,
+            'Kuşbaşı Pide': 230,
+            'Açık Pastırmalı': 230,
+            'Açık Beyaz Peynirli': 190,
+            'Kapalı Beyaz Peynirli': 170,
+            'Yağlı': 140,
+            'Extra Lavaş': 10,
+            'Extra Yumurta': 10,
+            'Extra Kaşar': 25,
+            'Çoban Salata': 30,
+            'Ezme': 20,
+            'Patlıcan Salatası': 50,
+            'Tropicana M. Suyu': 35,
+            '2.5 Lt Kola': 70,
+            '1 Lt Kola': 50,
+            'Kutu Kola': 35,
+            'Şalgam': 30,
+            'Şişe Kola': 50,
+            '1 Lt Fanta': 50,
+            '2.5 Lt Fanta': 70,
+            'Kutu Fanta': 30,
+            'Sprite': 30,
+            'Şişe Zero': 40,
+            'Türk Kahvesi': 40,
+            'Su': 5,
+            'Çay': 10,
+            'Ice Tea Şeftali': 35,
+            'Açık Ayran': 35,
+            'Ayran Pet': 35,
+            'Ayran Şişe': 35,
+            'Portakal Suyu': 35,
+            'Künefe': 85,
+            'Sütlaç': 75,
+            'Katmer': 75
         },
         'Çalıkuşu Kirazlık': {
             'Tavuk Dürüm Ç.lavaş Döner(100gr)': 160,
-            'Lahmacun': 70,
-            # Diğer menü öğeleri...
+            'Tavuk Dürüm Döner(50gr)': 80,
+            'Et Dürüm Döner': 140,
+            'Pepsi kola kutu': 40,
+            'Kola': 30,
+            'Ayran': 25,
+            'Ice tea şeftali': 40
         }
     }
 
@@ -119,21 +168,17 @@ with col1:
         )
 
         if secilen_yemek:
-            birim_fiyat = st.session_state.restoranlar[secilen_restoran][secilen_yemek]
-            adet = st.number_input("Adet", min_value=1, value=1)
-            toplam_fiyat = birim_fiyat * adet
-            st.write(f"Birim Fiyat: {birim_fiyat} TL")
-            st.write(f"Toplam Fiyat: {toplam_fiyat} TL")
+            fiyat = st.session_state.restoranlar[secilen_restoran][secilen_yemek]
+            st.write(f"Fiyat: {fiyat} TL")
 
     not_girisi = st.text_input("Not (isteğe bağlı)")
 
-    if st.button("Sipariş Ver") and isim and secilen_yemek:
+    if st.button("Sipariş Ver") and isim:
         # Yeni siparişi veritabanına ekle
         conn.execute('''
-            INSERT INTO siparisler (tarih, isim, restoran, yemek, adet, birim_fiyat, toplam_fiyat, notlar) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', 
-            ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), 
-             isim, secilen_restoran, secilen_yemek, adet, birim_fiyat, toplam_fiyat, not_girisi))
+            INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat, notlar) 
+            VALUES (?, ?, ?, ?, ?, ?)''', 
+            ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat, not_girisi))
         conn.commit()
         st.success("Siparişiniz alındı!")
 
@@ -146,11 +191,7 @@ with col2:
     if not df.empty:
         # Kişi bazlı toplam tutarlar
         st.subheader("Kişi Bazlı Toplam")
-        kisi_bazli = df.groupby('isim').agg({
-            'adet': 'sum', 
-            'toplam_fiyat': 'sum'
-        }).reset_index()
-        kisi_bazli.columns = ['İsim', 'Toplam Adet', 'Toplam Tutar']
+        kisi_bazli = df.groupby('isim')['fiyat'].sum().reset_index()
         st.dataframe(kisi_bazli)
 
         # Excel indirme butonları
@@ -192,18 +233,11 @@ with col2:
                 st.warning("Silmek için bir sipariş seçmelisiniz.")
 
         # Tüm siparişleri göster
-        st.dataframe(df[['id', 'tarih', 'isim', 'restoran', 'yemek', 'adet', 'birim_fiyat', 'toplam_fiyat', 'notlar']])
+        st.dataframe(df[['id', 'tarih', 'isim', 'restoran', 'yemek', 'fiyat', 'notlar']])
 
-        # Toplam tutar ve toplam adet
-        toplam_tutar = df['toplam_fiyat'].sum()
-        toplam_adet = df['adet'].sum()
-        col_toplam_tutar, col_toplam_adet = st.columns(2)
-        
-        with col_toplam_tutar:
-            st.metric("Toplam Tutar", f"{toplam_tutar} TL")
-        
-        with col_toplam_adet:
-            st.metric("Toplam Adet", f"{toplam_adet}")
+        # Toplam tutar
+        toplam_tutar = df['fiyat'].sum()
+        st.metric("Toplam Tutar", f"{toplam_tutar} TL")
 
         # Siparişleri temizleme butonu
         if st.button("Siparişleri Temizle"):
