@@ -18,25 +18,23 @@ def create_table():
         restoran TEXT,
         yemek TEXT,
         fiyat REAL,
-        adet INTEGER,
         notlar TEXT
     )
     ''')
     conn.commit()
 
-# Yeni kolon ekleme (fiyat ve adet)
-def add_columns():
+# Yeni kolon ekleme (fiyat)
+def add_fiyat_column():
     try:
         conn.execute('''
             ALTER TABLE siparisler ADD COLUMN fiyat REAL;
-            ALTER TABLE siparisler ADD COLUMN adet INTEGER;
         ''')
         conn.commit()
     except sqlite3.OperationalError:
         # Eğer kolon zaten varsa, hata fırlatılır, bunu yok sayabiliriz
         pass
 
-add_columns()
+add_fiyat_column()
 create_table()
 
 # Excel indirme fonksiyonu
@@ -57,8 +55,7 @@ def to_excel(df):
         worksheet.set_column('C:C', 15)  # Restoran sütunu
         worksheet.set_column('D:D', 15)  # Yemek sütunu
         worksheet.set_column('E:E', 12)  # Fiyat sütunu
-        worksheet.set_column('F:F', 12)  # Adet sütunu
-        worksheet.set_column('G:G', 12)  # Notlar sütunu
+        worksheet.set_column('F:F', 12)  # Notlar sütunu
 
         # Fiyat sütununa format uygula
         worksheet.set_column('E:E', 12, para_format)
@@ -186,17 +183,16 @@ with col1:
             fiyat = st.session_state.restoranlar[secilen_restoran][secilen_yemek]
             st.write(f"Fiyat: {fiyat} TL")
 
-    adet = st.number_input("Adet", min_value=1, value=1, step=1)
     not_girisi = st.text_input("Not (isteğe bağlı)")
 
-    if st.button("Sipariş Ver") and isim and adet > 0:
+    if st.button("Sipariş Ver") and isim:
         # Yeni siparişi veritabanına ekle
         conn.execute('''
-            INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat, adet, notlar) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)''', 
-            ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat * adet, adet, not_girisi))
+            INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat, notlar) 
+            VALUES (?, ?, ?, ?, ?, ?)''', 
+            ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, fiyat, not_girisi))
         conn.commit()
-        st.success(f"{adet} adet {secilen_yemek} siparişiniz alındı!")
+        st.success("Siparişiniz alındı!")
 
 # Siparişleri görüntüleme
 with col2:
@@ -210,27 +206,33 @@ with col2:
         kisi_bazli = df.groupby('isim')['fiyat'].sum().reset_index()
         st.dataframe(kisi_bazli)
 
-        col_a, col_b = st.columns([1, 1])
+        # Excel indirme butonları
+        col_a, col_b = st.columns(2)
 
         with col_a:
+            # Tüm siparişlerin Excel'i
             excel_data = to_excel(df)
             st.download_button(
-                label="Tüm Siparişleri Excel Olarak İndir",
+                label="📥 Tüm Siparişleri İndir",
                 data=excel_data,
-                file_name="siparisler.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                file_name=f'siparisler_{datetime.now().strftime("%Y%m%d")}.xlsx',
+                mime='application/vnd    .openxmlformats-officedocument.spreadsheetml.sheet'
             )
 
         with col_b:
-            # Tarihe göre siparişleri filtreleme
-            today = datetime.today().date()
-            filtered_df = df[df['tarih'].str.startswith(str(today))]
+            # Kişi bazlı toplamların Excel'i
+            excel_data_kisi = to_excel(kisi_bazli)
+            st.download_button(
+                label="📥 Kişi Bazlı Toplamları İndir",
+                data=excel_data_kisi,
+                file_name=f'kisi_bazli_toplam_{datetime.now().strftime("%Y%m%d")}.xlsx',
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
 
-            if not filtered_df.empty:
-                st.subheader(f"{today} Tarihli Siparişler")
-                st.dataframe(filtered_df)
-            else:
-                st.warning(f"{today} tarihli sipariş bulunmamaktadır.")
+        # Siparişleri tablo olarak görüntüle
+        st.subheader("Siparişler")
+        st.dataframe(df)
     else:
-        st.warning("Veritabanında sipariş bulunmamaktadır.")
+        st.warning("Henüz sipariş bulunmamaktadır.")
+
 
