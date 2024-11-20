@@ -57,70 +57,14 @@ st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wid
 if 'restoranlar' not in st.session_state:
     st.session_state.restoranlar = {
         'Nazar Petrol': {
-'Adana Dürüm': 170,
+            'Adana Dürüm': 170,
             'Adana Porsiyon': 240,
             'Tavuk Dürüm': 155,
-            'Kanat Porsiyon': 200,
-            'Tavuk Porsiyon': 150,
-            'Yarım Tavuk': 130,
-            'Yarım Çeyrek Tavuk': 150,
-            'Bütün Ekmek Tavuk': 170,
-            'Ciğer Dürüm': 170,
-            'Ciğer Porsiyon': 240,
-            'Et Dürüm': 190,
-            'Et Porsiyon': 270,
-            'Köfte Porsiyon': 240,
-            'Yarım Köfte': 170,
-            'Yarım Çeyrek Köfte': 170,
-            'Bütün Köfte': 190,
-            'Kapalı Pide': 90,
-            'Lahmacun': 80,
-            'Açık Kıymalı': 170,
-            'Açık Kaşarlı': 180,
-            'Açık Karışık': 220,
-            'Açık Sucuklu': 230,
-            'Kuşbaşı Pide': 230,
-            'Açık Pastırmalı': 230,
-            'Açık Beyaz Peynirli': 190,
-            'Kapalı Beyaz Peynirli': 170,
-            'Yağlı': 140,
-            'Extra Lavaş': 10,
-            'Extra Yumurta': 10,
-            'Extra Kaşar': 25,
-            'Çoban Salata': 30,
-            'Ezme': 20,
-            'Patlıcan Salatası': 50,
-            'Tropicana M. Suyu': 35,
-            '2.5 Lt Kola': 70,
-            '1 Lt Kola': 50,
-            'Kutu Kola': 35,
-            'Şalgam': 30,
-            'Şişe Kola': 50,
-            '1 Lt Fanta': 50,
-            '2.5 Lt Fanta': 70,
-            'Kutu Fanta': 30,
-            'Sprite': 30,
-            'Şişe Zero': 40,
-            'Türk Kahvesi': 40,
-            'Su': 5,
-            'Çay': 10,
-            'Ice Tea Şeftali': 35,
-            'Açık Ayran': 35,
-            'Ayran Pet': 35,
-            'Ayran Şişe': 35,
-            'Portakal Suyu': 35,
-            'Künefe': 85,
-            'Sütlaç': 75,
-            'Katmer': 75
         },
         'Çalıkuşu Kirazlık': {
             'Tavuk Dürüm Ç.lavaş Döner(100gr)': 160,
-            'Tavuk Dürüm Döner(50gr)': 80,
             'Et Dürüm Döner': 140,
-            'Pepsi kola kutu': 40,
-            'Kola': 30,
             'Ayran': 25,
-            'Ice tea şeftali': 40
         }
     }
 
@@ -189,61 +133,7 @@ with col2:
     df = pd.read_sql_query('SELECT * FROM siparisler', conn)
 
     if not df.empty:
-        # Kişi bazlı toplam tutarlar
-        st.subheader("Kişi Bazlı Toplam")
-        kisi_bazli = df.groupby('isim')['fiyat'].sum().reset_index()
-        st.dataframe(kisi_bazli)
-
-        # Excel indirme butonları
-        col_a, col_b = st.columns(2)
-
-        with col_a:
-            # Tüm siparişlerin Excel'i
-            excel_data = to_excel(df)
-            st.download_button(
-                label="📥 Tüm Siparişleri İndir",
-                data=excel_data,
-                file_name=f'siparisler_{datetime.now().strftime("%Y%m%d")}.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-
-        with col_b:
-            # Kişi bazlı toplamların Excel'i
-            excel_data_summary = to_excel(kisi_bazli)
-            st.download_button(
-                label="📥 Özeti İndir",
-                data=excel_data_summary,
-                file_name=f'siparis_ozeti_{datetime.now().strftime("%Y%m%d")}.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-
-        # Tüm siparişler
         st.subheader("Tüm Siparişler")
-        
-        # Sipariş ID'lerini içeren bir dropdown oluştur
-        selected_order_id = st.selectbox("Silmek için sipariş ID'sini seçin", options=df['id'].tolist())
-
-        if st.button("Sil"):
-            if selected_order_id:
-                conn.execute('DELETE FROM siparisler WHERE id = ?', (selected_order_id,))
-                conn.commit()
-                st.success(f"{selected_order_id} ID'li sipariş silindi!")
-                st.legacy_caching.clear_cache()  # Sayfayı yeniden yükleyin
-            else:
-                st.warning("Silmek için bir sipariş seçmelisiniz.")
-
-        # Tüm siparişleri göster
-        st.dataframe(df[['id', 'tarih', 'isim', 'restoran', 'yemek', 'fiyat', 'notlar']])
-
-        # Toplam tutar
-        toplam_tutar = df['fiyat'].sum()
-        st.metric("Toplam Tutar", f"{toplam_tutar} TL")
-
-        # Siparişleri temizleme butonu
-        if st.button("Siparişleri Temizle"):
-            conn.execute('DELETE FROM siparisler')
-            conn.commit()
-            st.success("Tüm siparişler temizlendi!")
-            st.legacy_caching.clear_cache()  # Sayfayı yeniden yükleyin
+        st.dataframe(df)
     else:
         st.info("Henüz sipariş bulunmamaktadır.")
