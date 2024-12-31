@@ -1,4 +1,32 @@
 import streamlit as st
+
+# Sayfa yapılandırması - EN BAŞTA OLMALI
+st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
+
+# Arka plan için CSS ekleme - HEMEN ARDINDAN GELMELİ
+st.markdown("""
+<style>
+.stApp {
+    background-image: url("https://p4.wallpaperbetter.com/wallpaper/244/822/357/food-tomatoes-sauces-steak-wallpaper-preview.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+.stApp::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.85);
+    z-index: -1;
+}
+</style>
+""", unsafe_allow_html=True)
+
 import pandas as pd
 import sqlite3
 from datetime import datetime, timedelta
