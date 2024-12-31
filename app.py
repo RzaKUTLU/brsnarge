@@ -1,61 +1,9 @@
 import streamlit as st
-st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
-
 import pandas as pd
 import sqlite3
 from datetime import datetime, timedelta
 import io
 import xlsxwriter
-
-# Arka plan için CSS ekleme
-page_bg_img = '''
-<style>
-.stApp {
-    background-image: url("https://p4.wallpaperbetter.com/wallpaper/244/822/357/food-tomatoes-sauces-steak-wallpaper-preview.jpg");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-}
-
-/* Saydam beyaz overlay ekleyerek içeriği daha okunabilir yapma */
-.stApp::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.85);
-    z-index: -1;
-}
-
-/* Diğer stil iyileştirmeleri */
-.stTitle, .stHeader {
-    color: #2c3e50 !important;
-}
-
-.stButton>button {
-    background-color: #2c3e50;
-    color: white;
-}
-
-.stTextInput>div>div>input {
-    background-color: rgba(255, 255, 255, 0.9);
-}
-
-.stSelectbox>div>div>input {
-    background-color: rgba(255, 255, 255, 0.9);
-}
-
-div[data-testid="stDataFrame"] {
-    background-color: rgba(255, 255, 255, 0.9);
-}
-</style>
-'''
-
-# CSS'i uygula
-st.markdown(page_bg_img, unsafe_allow_html=True)
 
 # SQLite veritabanı bağlantısı
 conn = sqlite3.connect('siparisler.db')
