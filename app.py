@@ -7,25 +7,8 @@ import xlsxwriter
 
 st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
 
-st.markdown(
-    """
-    <style>
-    body {
-        background-image: url('grsl.jpg'); 
-        background-size: cover;
-        background-attachment: fixed;
-        color: white; /* Yazı rengini değiştirin */
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
 # SQLite veritabanı bağlantısı
 conn = sqlite3.connect('siparisler.db')
-
-
 
 # Siparişler tablosunu oluştur
 def create_table():
