@@ -1,9 +1,9 @@
 import streamlit as st
 
-# Sayfa yapılandırması - EN BAŞTA OLMALI
+# ÖNEMLİ: Sayfa yapılandırması ilk Streamlit komutu olmalı
 st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
 
-# Arka plan için CSS ekleme - HEMEN ARDINDAN GELMELİ
+# Arka plan için CSS
 st.markdown("""
 <style>
 .stApp {
@@ -27,17 +27,16 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Diğer importlar
 import pandas as pd
 import sqlite3
 from datetime import datetime, timedelta
 import io
 import xlsxwriter
 
-# SQLite veritabanı bağlantısı
-conn = sqlite3.connect('siparisler.db')
-
-# Siparişler tablosunu oluştur
+# Fonksiyon tanımlamaları
 def create_table():
+    conn = sqlite3.connect('siparisler.db')
     conn.execute('''
     CREATE TABLE IF NOT EXISTS siparisler (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,34 +50,28 @@ def create_table():
     )
     ''')
     conn.commit()
+    return conn
 
-create_table()
-
-# Excel indirme fonksiyonu
 def to_excel(df):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, sheet_name='Siparişler', index=False)
         workbook = writer.book
         worksheet = writer.sheets['Siparişler']
-
-        # Format ayarları
+        
         para_format = workbook.add_format({'num_format': '#,##0.00 ₺'})
-        tarih_format = workbook.add_format({'num_format': 'dd/mm/yyyy hh:mm'})
-
-        # Sütun genişliklerini ayarla
-        worksheet.set_column('A:A', 20)  # Tarih sütunu
-        worksheet.set_column('B:B', 15)  # İsim sütunu
-        worksheet.set_column('C:C', 15)  # Restoran sütunu
-        worksheet.set_column('D:D', 15)  # Yemek sütunu
-        worksheet.set_column('E:E', 12)  # Fiyat sütunu
-        worksheet.set_column('F:F', 12)  # Adet sütunu
-        worksheet.set_column('G:G', 12)  # Notlar sütunu
-
-        # Fiyat sütununa format uygula
+        worksheet.set_column('A:A', 20)
+        worksheet.set_column('B:B', 15)
+        worksheet.set_column('C:C', 15)
+        worksheet.set_column('D:D', 15)
         worksheet.set_column('E:E', 12, para_format)
-
+        worksheet.set_column('F:F', 12)
+        worksheet.set_column('G:G', 12)
+        
     return output.getvalue()
+
+# Veritabanı bağlantısı ve tablo oluşturma
+conn = create_table()
 
 # Sayfa yapılandırması
 st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
