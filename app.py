@@ -11,7 +11,7 @@ st.markdown(
     """
     <style>
     body {
-        background-image: url('brsnarge/grsl.jpg'); 
+        background-image: url('grsl.jpg'); 
         background-size: cover;
         background-attachment: fixed;
         color: white; /* Yazı rengini değiştirin */
