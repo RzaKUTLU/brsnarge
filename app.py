@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import io
 import xlsxwriter
 
-
+st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
 
 # SQLite veritabanı bağlantısı
 conn = sqlite3.connect('siparisler.db')
