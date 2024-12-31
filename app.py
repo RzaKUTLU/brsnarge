@@ -5,8 +5,12 @@ from datetime import datetime, timedelta
 import io
 import xlsxwriter
 
+
+
 # SQLite veritabanı bağlantısı
 conn = sqlite3.connect('siparisler.db')
+
+
 
 # Siparişler tablosunu oluştur
 def create_table():
@@ -25,6 +29,20 @@ def create_table():
     conn.commit()
 
 create_table()
+
+st.markdown(
+    """
+    <style>
+    body {
+        background-image: url('https://media.istockphoto.com/id/497407874/tr/foto%C4%9Fraf/healthy-food-background.jpg?s=2048x2048&w=is&k=20&c=MufBRJzMMXPZQLoRQujFsteycAa4IV8SALBjvI_r2cc=') 
+        background-size: cover;
+        background-attachment: fixed;
+        color: white; /* Yazı rengini değiştirin */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # Excel indirme fonksiyonu
 def to_excel(df):
