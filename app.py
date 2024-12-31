@@ -72,9 +72,6 @@ def to_excel(df):
 
     return output.getvalue()
 
-# Sayfa yapılandırması
-st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
-
 # Restoranları sakla
 if 'restoranlar' not in st.session_state:
     st.session_state.restoranlar = {
