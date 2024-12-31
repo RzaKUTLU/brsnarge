@@ -1,12 +1,11 @@
 import streamlit as st
+st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
+
 import pandas as pd
 import sqlite3
 from datetime import datetime, timedelta
 import io
 import xlsxwriter
-
-# Sayfa yapılandırması - İLK KOMUT OLMALI
-st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
 
 # Arka plan için CSS ekleme
 page_bg_img = '''
