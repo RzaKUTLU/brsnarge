@@ -11,7 +11,7 @@ st.markdown(
     """
     <style>
     body {
-        background-image: url('https://images.alphacoders.com/901/901715.jpg'); 
+        background-image: url('brsnarge/grsl.jpg'); 
         background-size: cover;
         background-attachment: fixed;
         color: white; /* Yazı rengini değiştirin */
