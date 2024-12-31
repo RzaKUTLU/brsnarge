@@ -5,14 +5,14 @@ from datetime import datetime, timedelta
 import io
 import xlsxwriter
 
-# Sayfa yapılandırması
+# Sayfa yapılandırması - İLK KOMUT OLMALI
 st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
 
 # Arka plan için CSS ekleme
 page_bg_img = '''
 <style>
 .stApp {
-    background-image: url("https://p4.wallpaperbetter.com/wallpaper/471/322/553/bread-meat-bbq-vegetables-wallpaper-preview.jpg");
+    background-image: url("https://p4.wallpaperbetter.com/wallpaper/244/822/357/food-tomatoes-sauces-steak-wallpaper-preview.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
