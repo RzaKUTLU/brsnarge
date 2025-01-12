@@ -4,8 +4,359 @@ import sqlite3
 from datetime import datetime, timedelta
 import io
 import xlsxwriter
+import base64
+import time
+
+def add_bg_from_local(image_file):
+    with open(image_file, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode()
+    return f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/png;base64,{encoded_string}");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+    </style>
+    """
 
 st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
+
+# CSS stillerini güncelle
+st.markdown(
+    """
+    <style>
+    /* Ana arka plan */
+    .stApp {
+        background-image: url("https://cdn.wallpapersafari.com/5/24/IvSYOt.jpg");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
+
+    /* Başlıklar için stil */
+    h1, h2, h3 {
+        color: white !important;
+        font-weight: 700 !important;
+        font-size: 2rem !important;
+        text-shadow: 
+            2px 2px 0 #000,
+            -2px 2px 0 #000,
+            2px -2px 0 #000,
+            -2px -2px 0 #000,
+            0 2px 0 #000,
+            0 -2px 0 #000,
+            2px 0 0 #000,
+            -2px 0 0 #000 !important;
+    }
+
+    /* Alt başlıklar için özel boyut */
+    h2 { font-size: 1.8rem !important; }
+    h3 { font-size: 1.5rem !important; }
+
+    /* Normal metin için stil */
+    p, label, span, .stMarkdown {
+        color: white !important;
+        font-weight: 500 !important;
+        font-size: 1.2rem !important;
+        text-shadow: 
+            1.5px 1.5px 0 #000,
+            -1.5px 1.5px 0 #000,
+            1.5px -1.5px 0 #000,
+            -1.5px -1.5px 0 #000 !important;
+    }
+
+    /* Parıltı efekti için stil */
+    .sparkle {
+        position: fixed;
+        border-radius: 50%;
+        background-color: white;
+        box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.3);
+        pointer-events: none;
+        opacity: 0;
+        z-index: 9999;
+    }
+
+    /* 60 farklı parıltı için stil ve animasyon */
+    .sparkle:nth-child(1) { width: 8px; height: 8px; animation: sparkleRandom1 3s infinite; }
+    .sparkle:nth-child(2) { width: 6px; height: 6px; animation: sparkleRandom2 4s infinite; }
+    .sparkle:nth-child(3) { width: 7px; height: 7px; animation: sparkleRandom3 5s infinite; }
+    .sparkle:nth-child(4) { width: 5px; height: 5px; animation: sparkleRandom4 6s infinite; }
+    .sparkle:nth-child(5) { width: 4px; height: 4px; animation: sparkleRandom5 3.5s infinite; }
+    .sparkle:nth-child(6) { width: 6px; height: 6px; animation: sparkleRandom6 4.5s infinite; }
+    .sparkle:nth-child(7) { width: 7px; height: 7px; animation: sparkleRandom7 5.5s infinite; }
+    .sparkle:nth-child(8) { width: 5px; height: 5px; animation: sparkleRandom8 3.2s infinite; }
+    .sparkle:nth-child(9) { width: 6px; height: 6px; animation: sparkleRandom9 4.2s infinite; }
+    .sparkle:nth-child(10) { width: 8px; height: 8px; animation: sparkleRandom10 5.2s infinite; }
+    /* ... diğer parıltılar için benzer tanımlamalar ... */
+
+    /* Parıltı animasyonları */
+    @keyframes sparkleRandom1 { 0% { transform: translate(5vw, 5vh); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translate(95vw, 95vh); opacity: 0; }}
+    @keyframes sparkleRandom2 { 0% { transform: translate(95vw, 5vh); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translate(5vw, 95vh); opacity: 0; }}
+    @keyframes sparkleRandom3 { 0% { transform: translate(50vw, 0vh); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translate(50vw, 100vh); opacity: 0; }}
+    @keyframes sparkleRandom4 { 0% { transform: translate(0vw, 50vh); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translate(100vw, 50vh); opacity: 0; }}
+    @keyframes sparkleRandom5 { 0% { transform: translate(25vw, 75vh); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translate(75vw, 25vh); opacity: 0; }}
+    @keyframes sparkleRandom6 { 0% { transform: translate(75vw, 25vh); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translate(25vw, 75vh); opacity: 0; }}
+    @keyframes sparkleRandom7 { 0% { transform: translate(10vw, 90vh); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translate(90vw, 10vh); opacity: 0; }}
+    @keyframes sparkleRandom8 { 0% { transform: translate(90vw, 90vh); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translate(10vw, 10vh); opacity: 0; }}
+    @keyframes sparkleRandom9 { 0% { transform: translate(30vw, 70vh); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translate(70vw, 30vh); opacity: 0; }}
+    @keyframes sparkleRandom10 { 0% { transform: translate(60vw, 40vh); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translate(40vw, 60vh); opacity: 0; }}
+    /* ... diğer animasyonlar için benzer tanımlamalar ... */
+
+    /* Metric değeri için stil */
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
+        color: white !important;
+        font-weight: 700 !important;
+        text-shadow: 
+            2px 2px 0 #000,
+            -2px 2px 0 #000,
+            2px -2px 0 #000,
+            -2px -2px 0 #000,
+            0 2px 0 #000,
+            0 -2px 0 #000,
+            2px 0 0 #000,
+            -2px 0 0 #000 !important;
+    }
+
+    /* Metric delta değeri için stil (eğer varsa) */
+    [data-testid="stMetricDelta"] {
+        color: white !important;
+        font-weight: 500 !important;
+        text-shadow: 
+            1px 1px 0 #000,
+            -1px 1px 0 #000,
+            1px -1px 0 #000,
+            -1px -1px 0 #000 !important;
+    }
+
+    /* Sepete Ekle butonu için yeşil stil */
+    button[data-testid="baseButton-secondary"]:contains("Sepete Ekle") {
+        background-color: #28a745 !important;
+        color: white !important;
+        border: none !important;
+    }
+
+    /* Sil butonu için kırmızı stil */
+    button[data-testid="baseButton-secondary"]:contains("Sil") {
+        background-color: #dc3545 !important;
+        color: white !important;
+        border: none !important;
+    }
+
+    /* Siparişleri Temizle butonu için kırmızı stil */
+    button[data-testid="baseButton-secondary"]:contains("Siparişleri Temizle") {
+        background-color: #dc3545 !important;
+        color: white !important;
+        border: none !important;
+    }
+
+    /* Hover efekti */
+    button[data-testid="baseButton-secondary"]:hover {
+        opacity: 0.8 !important;
+        transition: opacity 0.2s !important;
+    }
+    </style>
+
+    <!-- 60 adet parıltı elementi -->
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <!-- ... diğer parıltı elementleri ... -->
+    """,
+    unsafe_allow_html=True
+)
+
+# Başlığın hemen altına bu kodu ekleyin (st.title() satırından sonra)
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-image: url("https://cdn.wallpapersafari.com/5/24/IvSYOt.jpg");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
+    
+    /* Metin okunabilirliği için arka plan overlay'i */
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7); /* Yarı saydam siyah overlay */
+        z-index: -1;
+    }
+    
+    /* Metin rengini beyaz yapın */
+    .stMarkdown, .stTitle, h1, h2, h3, p, .stMetric {
+        color: white !important;
+    }
+    
+    /* Sidebar stilini düzenleyin */
+    .css-1d391kg {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Cart item stilini güncelleyin */
+    .cart-item {
+        background-color: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+        color: white;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# CSS stillerini güncelleyelim - Input alanları için belirgin stil ekleyerek
+st.markdown("""
+<style>
+    /* Sidebar ana container */
+    section[data-testid="stSidebar"] > div {
+        background-color: white !important;
+    }
+    
+    /* Sidebar içindeki tüm yazı elementleri */
+    section[data-testid="stSidebar"] * {
+        color: black !important;
+        text-shadow: none !important;
+        font-weight: normal !important;
+    }
+    
+    /* Sidebar butonları için özel stil */
+    section[data-testid="stSidebar"] button {
+        background-color: #f0f2f6 !important;
+        border: 1px solid #e0e0e0 !important;
+        border-radius: 4px !important;
+        padding: 4px 12px !important;
+        margin: 4px 0 !important;
+        color: black !important;
+        width: 100% !important;
+        transition: all 0.2s !important;
+    }
+
+    /* Buton hover efekti */
+    section[data-testid="stSidebar"] button:hover {
+        background-color: #e0e2e6 !important;
+        border-color: #d0d0d0 !important;
+    }
+    
+    /* Input alanları için belirgin stil */
+    section[data-testid="stSidebar"] input[type="text"],
+    section[data-testid="stSidebar"] input[type="number"],
+    section[data-testid="stSidebar"] .stTextInput > div > div > input {
+        background-color: white !important;
+        border: 1px solid #ccc !important;
+        border-radius: 4px !important;
+        padding: 4px 8px !important;
+        margin: 4px 0 !important;
+        width: 100% !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    }
+
+    /* Input focus efekti */
+    section[data-testid="stSidebar"] input[type="text"]:focus,
+    section[data-testid="stSidebar"] input[type="number"]:focus,
+    section[data-testid="stSidebar"] .stTextInput > div > div > input:focus {
+        border-color: #80bdff !important;
+        box-shadow: 0 0 0 2px rgba(0,123,255,0.25) !important;
+        outline: none !important;
+    }
+
+    /* Email linki için özel stil */
+    section[data-testid="stSidebar"] a[href^="mailto:"] {
+        color: #0066cc !important;
+        text-decoration: none !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Ana sayfa düzenini güncelle
+st.markdown('<div class="card"><h1 align="center">🍽️ Borsan Ar-Ge Yemek Sipariş Sistemi</h1></div>', unsafe_allow_html=True)
+
+# Sidebar'ı gizle ve ana sayfada minimal tutun
+with st.sidebar:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.header("⚙️ Yönetim")
+    
+    # Mevcut yönetim seçenekleri...
+    
+    st.markdown("---")  # Ayırıcı çizgi
+    
+    # Hakkında butonu
+    if st.button("ℹ️ Hakkında"):
+        st.markdown("""
+        ### 🍽️ Borsan Ar-Ge Yemek Sipariş Sistemi
+
+        **Versiyon:** 2.0
+        **Uygulama Çıkış Tarihi:**
+         10.20.2024
+        **Uygulama Son Güncelleme:** 
+        12.01.2025
+
+        **Geliştirmeler:**
+        * 📦 Çoklu sipariş
+        * 🔒 Güvenlik
+        * ✨ Animasyon - UI
+
+        **Özellikler:**
+        * 🍽️ Restoran ve menü yönetimi
+        * 🛒 Çoklu yemek siparişi
+        * 📝 Sipariş notu ekleme
+        * 💰 Otomatik fiyat hesaplama
+        * 📊 Kişi bazlı raporlama
+        * 📥 Excel rapor indirme
+        * 🗑️ Sipariş silme ve düzenleme
+        * ⚡ Anlık sipariş takibi
+
+        **Geliştirici:** RK
+        
+        **İletişim:** rizakutlu@borsan.com.tr
+
+        **Amaç:** 
+        * ⏱️ Borsan Ar-Ge personellerinin yemek siparişi sırasında gereksiz zaman kaybının önüne geçilmesi
+
+        © 2024 Borsan Ar-Ge
+        """)
+    # ... sidebar içeriği ...
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# Ana içerik alanını düzenle
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.header("🛒 Sipariş Ver")
+    # ... sipariş formu ...
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with col2:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.header("📋 Günlük Siparişler")
+    # ... siparişler listesi ...
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # SQLite veritabanı bağlantısı
 conn = sqlite3.connect('siparisler.db')
@@ -156,41 +507,84 @@ with st.sidebar:
         st.success(f"{new_item} menüye eklendi!")
 
 # Ana sayfa - Sipariş verme
-col1, col2 = st.columns([2, 1])
+col1, col2 = st.columns([1.2, 1])  # Sütun oranlarını değiştir
 
 with col1:
     st.header("Sipariş Ver")
 
-    # Kullanıcı bilgileri ve sipariş formu
+    # Kullanıcı bilgileri
     isim = st.text_input("Adınız")
     secilen_restoran = st.selectbox("Restoran", options=list(st.session_state.restoranlar.keys()))
 
     if secilen_restoran:
-        secilen_yemek = st.selectbox(
-            "Yemek",
-            options=list(st.session_state.restoranlar[secilen_restoran].keys())
-        )
+        # Çoklu yemek seçimi için container
+        with st.container():
+            st.subheader("Yemek Seçimi")
+            
+            # Session state'i başlat
+            if 'siparisler' not in st.session_state:
+                st.session_state.siparisler = []
+            
+            # Yeni yemek ekleme formu
+            with st.form(key='yemek_form'):
+                secilen_yemek = st.selectbox(
+                    "Yemek",
+                    options=list(st.session_state.restoranlar[secilen_restoran].keys())
+                )
+                
+                fiyat = st.session_state.restoranlar[secilen_restoran][secilen_yemek]
+                st.write(f"Fiyat: {fiyat} TL")
+                
+                adet = st.number_input("Adet", min_value=1, value=1)
+                not_girisi = st.text_input("Not")
+                
+                submit_button = st.form_submit_button("Sepete Ekle")
+                if submit_button:
+                    st.session_state.siparisler.append({
+                        'yemek': secilen_yemek,
+                        'adet': adet,
+                        'fiyat': fiyat * adet,
+                        'not': not_girisi
+                    })
+                    st.success(f"{secilen_yemek} sepete eklendi!")
 
-        if secilen_yemek:
-            fiyat = st.session_state.restoranlar[secilen_restoran][secilen_yemek]
-            st.write(f"Fiyat: {fiyat} TL")
+        # Sepeti göster
+        if st.session_state.siparisler:
+            st.subheader("Sepetiniz")
+            for i, siparis in enumerate(st.session_state.siparisler):
+                col_info, col_sil = st.columns([3, 1])
+                with col_info:
+                    st.write(f"{siparis['adet']}x {siparis['yemek']} - {siparis['fiyat']} TL")
+                    if siparis['not']:
+                        st.write(f"Not: {siparis['not']}")
+                with col_sil:
+                    if st.button("Sil", key=f"sil_{i}"):
+                        st.session_state.siparisler.pop(i)
+                        st.rerun()
 
-    # Adet seçimi ekleniyor
-    adet = st.number_input("Adet", min_value=1, value=1)
+            toplam = sum(s['fiyat'] for s in st.session_state.siparisler)
+            st.write(f"**Toplam: {toplam} TL**")
 
-    not_girisi = st.text_input("Not (isteğe bağlı)")
-
-    if st.button("Sipariş Ver") and isim:
-        # Fiyatı hesapla
-        toplam_fiyat = fiyat * adet
-        
-        # Yeni siparişi veritabanına ekle
-        conn.execute('''
-            INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat, adet, notlar) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)''', 
-            ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"), isim, secilen_restoran, secilen_yemek, toplam_fiyat, adet, not_girisi))
-        conn.commit()
-        st.success("Siparişiniz alındı!")
+            # Siparişi tamamla butonu
+            if st.button("Siparişi Tamamla") and isim:
+                for siparis in st.session_state.siparisler:
+                    conn.execute('''
+                        INSERT INTO siparisler (tarih, isim, restoran, yemek, fiyat, adet, notlar) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?)''', 
+                        ((datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M"),
+                         isim,
+                         secilen_restoran,
+                         siparis['yemek'],
+                         siparis['fiyat'],
+                         siparis['adet'],
+                         siparis['not'])
+                    )
+                conn.commit()
+                st.session_state.siparisler = []  # Sepeti temizle
+                st.success("❄️ Siparişiniz başarıyla alındı!")
+                st.snow()  # Kar efekti
+                time.sleep(2)
+                st.rerun()
 
 # Siparişleri görüntüleme
 with col2:
@@ -238,7 +632,7 @@ with col2:
                 conn.execute('DELETE FROM siparisler WHERE id = ?', (selected_order_id,))
                 conn.commit()
                 st.success(f"{selected_order_id} ID'li sipariş silindi!")
-                st.legacy_caching.clear_cache()  # Sayfayı yeniden yükleyin
+                st.rerun()
             else:
                 st.warning("Silmek için bir sipariş seçmelisiniz.")
 
@@ -251,9 +645,24 @@ with col2:
 
         # Siparişleri temizleme butonu
         if st.button("Siparişleri Temizle"):
-            conn.execute('DELETE FROM siparisler')
-            conn.commit()
-            st.success("Tüm siparişler temizlendi!")
-            st.legacy_caching.clear_cache()  # Sayfayı yeniden yükleyin
+            try:
+                conn.execute('DELETE FROM siparisler')
+                conn.commit()
+                st.success("❄️ Tüm siparişler başarıyla silindi!")
+                st.snow()  # Kar efekti
+                time.sleep(2)
+                st.rerun()
+            except Exception as e:
+                st.error(f"❌ Silme işlemi sırasında hata: {e}")
     else:
         st.info("Henüz sipariş bulunmamaktadır.")
+
+# Sepet öğelerini özel div içine alın
+if st.session_state.siparisler:
+    for i, siparis in enumerate(st.session_state.siparisler):
+        st.markdown(f'''
+        <div class="cart-item">
+            <p>{siparis['adet']}x {siparis['yemek']} - {siparis['fiyat']} TL</p>
+            {f"<p><small>Not: {siparis['not']}</small></p>" if siparis['not'] else ""}
+        </div>
+        ''', unsafe_allow_html=True)
