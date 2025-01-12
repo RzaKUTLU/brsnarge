@@ -311,6 +311,7 @@ with st.sidebar:
         ### 🍽️ Borsan Ar-Ge Yemek Sipariş Sistemi
 
         **Versiyon:** 2.0
+        
         **Uygulama Çıkış Tarihi:**
         * 10.20.2024
         **Uygulama Son Güncelleme:** 
