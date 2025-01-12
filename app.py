@@ -312,9 +312,9 @@ with st.sidebar:
 
         **Versiyon:** 2.0
         **Uygulama Çıkış Tarihi:**
-         10.20.2024
+        * 10.20.2024
         **Uygulama Son Güncelleme:** 
-        12.01.2025
+        * 12.01.2025
 
         **Geliştirmeler:**
         * 📦 Çoklu sipariş
