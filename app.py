@@ -21,7 +21,7 @@ def add_bg_from_local(image_file):
     </style>
     """
 
-st.set_page_config(page_title="Borsan Ar-Ge Yemek Sipariş Sistemi", layout="wide")
+st.set_page_config(page_title="Hoşgeldiniz", layout="wide")
 
 # CSS stillerini güncelle
 st.markdown(
