@@ -65,3 +65,16 @@ streamlit run app.py
 ```
 
 ### **Adım 4: Tarayıcıda Açın**
+```bash
+https://brsnfoodapplication.streamlit.app/
+```
+
+## 🚀 Kullanım
+
+1. **Restoran Seçimi** - Sol menüden restoran seçin
+2. **Yemek Siparişi** - Yemek seçin, adet belirleyin, not ekleyin
+3. **Sepete Ekle** - "Sepete Ekle" butonuna tıklayın
+4. **Sipariş Tamamla** - "Siparişi Tamamla" butonuna tıklayın
+
+## �� Proje Yapısı
+
